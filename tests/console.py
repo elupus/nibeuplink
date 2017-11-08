@@ -27,7 +27,9 @@ parser.add_argument('client_secret')
 parser.add_argument('redirect_uri')
 
 parser.add_argument('--system', type=int)
-parser.add_argument('--parameters', nargs='+', type=int)
+parser.add_argument('--categories', action='store_true')
+parser.add_argument('--category', nargs='+')
+parser.add_argument('--parameter', nargs='+', type=int)
 
 args = parser.parse_args()
 
@@ -64,12 +66,22 @@ async def run():
             await uplink.get_access_token(uplink.get_code_from_url(result))
 
         todo = []
-        if args.parameters:
-            todo.extend([uplink.get_parameter(args.system, p) for p in args.parameters])
-        elif args.system:
-            todo.extend([uplink.get_system(args.system)])
-        else:
+        if not args.system:
             todo.extend([uplink.get_systems()])
+        else:
+
+            if args.parameter:
+                todo.extend([uplink.get_parameter(args.system, p) for p in args.parameter])
+
+            if args.categories:
+                todo.extend([uplink.get_categories(args.system, False)])
+
+            if args.category:
+                todo.extend([uplink.get_category(args.system, p) for p in args.category])
+
+            if not len(todo):
+                todo.extend([uplink.get_system(args.system)])
+
 
         res = await asyncio.gather(*todo)
         print(json.dumps(res, indent=1))
