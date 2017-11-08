@@ -25,9 +25,9 @@ def pair(arg):
     return (data[0], data[1])
 
 parser = argparse.ArgumentParser(description='Read data from nibe uplink.')
-parser.add_argument('client_id')
-parser.add_argument('client_secret')
-parser.add_argument('redirect_uri')
+parser.add_argument('--client_id')
+parser.add_argument('--client_secret')
+parser.add_argument('--redirect_uri')
 
 parser.add_argument('--system', type=int)
 parser.add_argument('--categories', action='store_true')
