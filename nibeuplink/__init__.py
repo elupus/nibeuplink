@@ -8,6 +8,8 @@ from requests_oauthlib import OAuth2Session
 
 _LOGGER = logging.getLogger(__name__)
 
+MAX_REQUEST_PARAMETERS   = 15
+
 SCOPE               = [ 'READSYSTEM' ]
 
 BASE_URL            = 'https://api.nibeuplink.com'
@@ -56,6 +58,7 @@ class System():
         self.uplink     = uplink
         self.system_id  = system_id
         self.parameters = {}
+        self.categories = {}
         self.data       = None
 
 class Parameter():
@@ -64,6 +67,17 @@ class Parameter():
         self.system_id    = system_id
         self.parameter_id = parameter_id
         self.data         = None
+
+    def __repr__(self):
+        return 'system_id: {} parameter_id: {} data: {}'.format(self.system_id, self.parameter_id, self.data)
+
+class Category():
+    def __init__(self, uplink, system_id, category_id):
+        self.uplink        = uplink
+        self.system_id     = system_id
+        self.category_id   = category_id
+        self.name          = ''
+        self.parameter_ids = []
 
 class Uplink():
 
@@ -82,22 +96,57 @@ class Uplink():
         return data
 
     def update(self):
+        self.update_systems()
         for system_id in self.systems.keys():
-            self.update_parameters(system_id)
+            self.update_categories(system_id)
+            #self.update_parameters(system_id)
+
+    def update_systems(self):
+        _LOGGER.debug("Requesting systems")
+        data = self.get('systems')
+        for s in data['objects']:
+            system = self.get_system(s['systemId'])
+            system.data = s
+
+    def update_categories(self, system_id):
+        _LOGGER.debug("Requesting categories on system {}".format(system_id))
+
+        system = self.get_system(system_id)
+        data   = self.get('systems/{}/serviceinfo/categories'.format(system_id),
+                          {'parameters' : 'True'})
+
+        for c in data:
+            category = self.get_category(system_id, c['categoryId'])
+            category.name = c['name']
+            category.parameter_ids = [ p['parameterId'] for p in c['parameters'] ]
+            for p in c['parameters']:
+                parameter = self.get_parameter(system_id, p['parameterId'])
+                parameter.data = p
 
     def update_parameters(self, system_id):
-            system = self.get_system(system_id)
-            for parameters in chunks(system.parameters, MAX_REQUEST_PARAMETERS):
-                _LOGGER.debug(parameters)
+        system = self.get_system(system_id)
+        for parameters in chunks(system.parameters, MAX_REQUEST_PARAMETERS):
+            _LOGGER.debug("Requesting parmeters {}".format(parmeters))
+            data = self.get(
+                        'systems/{}/parameters'.format(system.system_id),
+                        { 'parameterIds' : parameters.keys() }
+                   )
 
-                data = self.get(
-                            'systems/{}/parameters'.format(system.system_id),
-                            { 'parameterIds' : parameters.keys() }
-                       )
+            for parameter in data:
+                p = self.get_parameter(system.system_id, parameter['parameterId'])
+                p.data = data
 
-                for parameter in data:
-                    p = self.get_parameter(system.system_id, parameter['parameterId'])
-                    p.data = data
+    def get_category(self, system_id, category_id):
+        system   = self.get_system(system_id)
+        category = None
+
+        if category_id in system.categories:
+            category = system.categories[category_id]
+        else:
+            category = Category(self, system_id, category_id)
+            system.categories[category_id] = category
+
+        return category
 
     def get_system(self, system_id):
         system = None
