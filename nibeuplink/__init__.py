@@ -9,9 +9,9 @@ _LOGGER = logging.getLogger(__name__)
 
 SCOPE               = [ 'READSYSTEM' ]
 
-BASE                = 'https://api.nibeuplink.com'
-TOKEN_URL           = '%s/oauth/token' % BASE
-AUTH_URL            = '%s/oauth/authorize' % BASE
+BASE_URL            = 'https://api.nibeuplink.com'
+TOKEN_URL           = '%s/oauth/token' % BASE_URL
+AUTH_URL            = '%s/oauth/authorize' % BASE_URL
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
