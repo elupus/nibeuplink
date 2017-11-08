@@ -198,9 +198,10 @@ class Uplink():
                     r.done = True
 
                 _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
-                query = ['parameterIds=' + str(x.parameter_id) for x in requests]
+                params = [('parameterIds', str(x.parameter_id)) for x in requests]
                 data = await self._get_internal(
-                            'systems/{}/parameters?{}'.format(system_id, '&'.join(query)),
+                            'systems/{}/parameters'.format(system_id),
+                            params = params
                        )
                 lookup = { p['parameterId']: p for p in data }
 
@@ -227,11 +228,11 @@ class Uplink():
         return data
 
 
-    async def get_categories(self, system_id):
+    async def get_categories(self, system_id, parameters):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
         data   = await self.get('systems/{}/serviceinfo/categories'.format(system_id),
-                                {'parameters' : 'True'})
+                                {'parameters' : str(parameters)})
         return data
 
 
