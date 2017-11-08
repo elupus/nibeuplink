@@ -10,5 +10,8 @@ setup(
     install_requires=[
         'asyncio',
         'aiohttp',
-    ]
+    ],
+    entry_points = {
+        'console_scripts' : ['nibeuplink.console=nibeuplink.console:main']
+    }
 )
