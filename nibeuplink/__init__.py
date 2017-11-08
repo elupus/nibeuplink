@@ -239,7 +239,6 @@ class Uplink():
         data   = await self.get('systems/{}/serviceinfo/categories/{}'.format(system_id, category_id))
         return data
 
-
     async def get_categories(self, system_id, parameters):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
@@ -247,7 +246,14 @@ class Uplink():
                                 {'parameters' : str(parameters)})
         return data
 
-
     async def get_status(self, system_id):
         _LOGGER.debug("Requesting status on system {}".format(system_id))
         return await self.get('systems/{}/status/system'.format(system_id))
+
+    async def get_units(self, system_id):
+        _LOGGER.debug("Requesting units on system {}".format(system_id))
+        return await self.get('systems/{}/units'.format(system_id))
+
+    async def get_unit_status(self, system_id, unit_id):
+        _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
+        return await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
