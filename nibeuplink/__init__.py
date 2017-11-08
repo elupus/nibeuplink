@@ -153,15 +153,17 @@ class Uplink():
 
             headers = {}
             url = '%s/api/v1/%s' % (BASE_URL, uri)
-            async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
-                data = await response.json()
-                _LOGGER.debug(response)
 
-                if 400 <= response.status:
-                    await self.refresh_access_token()
-                    data = await self.get(uri, params)
+            for attempt in range(0, 2):
 
-                return data
+                async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
+                    data = await response.json()
+
+                    if 400 <= response.status:
+                        await self.refresh_access_token()
+                        continue
+
+                    return data
 
     async def update(self):
         await self.update_systems()
