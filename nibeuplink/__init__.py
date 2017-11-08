@@ -140,7 +140,6 @@ class Uplink():
         timestamp = datetime.now()
 
         delay = (self.timestamp - timestamp).total_seconds()
-        print(delay)
         if delay > 0:
             await asyncio.sleep(delay)
         self.timestamp = timestamp + timedelta(seconds = MIN_REQUEST_DELAY)
