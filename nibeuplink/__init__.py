@@ -31,26 +31,20 @@ class BearerAuth(aiohttp.BasicAuth):
         return "Bearer {}".format(self.access_token)
 
 class System():
-    def __init__(self, uplink, system_id):
-        self.uplink     = uplink
+    def __init__(self, system_id):
         self.system_id  = system_id
         self.parameters = {}
         self.categories = {}
         self.data       = None
 
 class Parameter():
-    def __init__(self, uplink, system_id, parameter_id):
-        self.uplink       = uplink
+    def __init__(self, system_id, parameter_id):
         self.system_id    = system_id
         self.parameter_id = parameter_id
         self.data         = None
 
-    def __repr__(self):
-        return 'system_id: {} parameter_id: {} data: {}'.format(self.system_id, self.parameter_id, self.data)
-
 class Category():
-    def __init__(self, uplink, system_id, category_id):
-        self.uplink        = uplink
+    def __init__(self, system_id, category_id):
         self.system_id     = system_id
         self.category_id   = category_id
         self.name          = ''
@@ -213,7 +207,7 @@ class Uplink():
         if category_id in system.categories:
             category = system.categories[category_id]
         else:
-            category = Category(self, system_id, category_id)
+            category = Category(system_id, category_id)
             system.categories[category_id] = category
 
         return category
@@ -223,7 +217,7 @@ class Uplink():
         if system_id in self.systems:
             system = self.systems[system_id]
         else:
-            system = System(self, system_id)
+            system = System(system_id)
             self.systems[system_id] = system
         return system
 
@@ -234,7 +228,7 @@ class Uplink():
         if parameter_id in system.parameters:
             parameter = system.parameters[parameter_id]
         else:
-            parameter = Parameter(self, system_id, parameter_id)
+            parameter = Parameter(system_id, parameter_id)
             system.parameters[parameter_id] = parameter
 
         return parameter
