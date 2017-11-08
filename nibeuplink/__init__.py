@@ -1,57 +1,34 @@
 import logging
 import sys
 import os
-import pickle
 from itertools import islice
+import asyncio
+import aiohttp
+import uuid
 
-from requests_oauthlib import OAuth2Session
+from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
+
 
 _LOGGER = logging.getLogger(__name__)
 
 MAX_REQUEST_PARAMETERS   = 15
-
-SCOPE               = [ 'READSYSTEM' ]
-
+MIN_REQUEST_DELAY        = 4
+SCOPE               = 'READSYSTEM'
 BASE_URL            = 'https://api.nibeuplink.com'
 TOKEN_URL           = '%s/oauth/token' % BASE_URL
 AUTH_URL            = '%s/oauth/authorize' % BASE_URL
-
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 def chunks(data, SIZE):
     it = iter(data)
     for i in range(0, len(data), SIZE):
         yield {k:data[k] for k in islice(it, SIZE)}
 
-class OAuth2(OAuth2Session):
-    def __init__(self, client_id, client_secret, redirect_uri, token, token_updater):
-        self.client_secret = client_secret
+class BearerAuth(aiohttp.BasicAuth):
+    def __init__(self, access_token):
+        self.access_token = access_token
 
-        extra = {
-            'client_id'    : client_id,
-            'client_secret': client_secret,
-        }
-
-        super().__init__(
-            client_id            = client_id,
-            redirect_uri         = redirect_uri,
-            auto_refresh_url     = TOKEN_URL,
-            auto_refresh_kwargs  = extra,
-            scope                = SCOPE,
-            token                = token,
-            token_updater        = token_updater)
-
-    def authorization_url(self):
-        return super().authorization_url(AUTH_URL)
-
-    def fetch_token(self, authorization_response):
-        token = super().fetch_token(
-            TOKEN_URL,
-            client_secret          = self.client_secret,
-            authorization_response = authorization_response)
-        self.token_updater(token)
-        return token
-
+    def encode(self):
+        return "Bearer {}".format(self.access_token)
 
 class System():
     def __init__(self, uplink, system_id):
@@ -81,39 +58,128 @@ class Category():
 
 class Uplink():
 
-    def __init__(self, session):
-        self.session    = session
-        self.systems    = {}
+    def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write):
 
-    def get(self, uri, params = {}):
-        if not self.session.authorized:
-            return None
+        self.redirect_uri      = redirect_uri
+        self.client_id         = client_id
+        self.access_data       = access_data
+        self.access_data_write = access_data_write
+        self.state             = None
+
+        if self.access_data:
+            self.auth = BearerAuth(self.access_data['access_token'])
+        else:
+            self.auth = None
+
+        headers = {
+                'Accept'       : 'application/json',
+        }
+
+        self.session           = aiohttp.ClientSession(headers = headers, auth = aiohttp.BasicAuth(client_id, client_secret))
+        self.systems           = {}
+        self.sleep             = None
+
+    def __del__(self):
+        self.close()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def close(self):
+        self.session.close()
+
+    def handle_access_token(self, data):
+        if 'access_token' not in data:
+            raise ValueError('Error in reply {}'.format(data))
+
+        self.access_data = data
+        if self.access_data_write:
+            self.access_data_write(data)
+        self.auth = BearerAuth(self.access_data['access_token'])
+
+    async def get_access_token(self, code):
+        payload = {
+            'grant_type'   : 'authorization_code',
+            'code'         : code,
+            'redirect_uri' : self.redirect_uri,
+        }
+
+        async with self.session.post(TOKEN_URL, data=payload) as response:
+            response.raise_for_status()
+            self.handle_access_token(await response.json())
+
+
+    async def refresh_access_token(self):
+        payload = {
+            'grant_type'    : 'refresh_token',
+            'refresh_token' : self.access_data['refresh_token'],
+        }
+
+        async with self.session.post(TOKEN_URL, data=payload) as response:
+            response.raise_for_status()
+            self.handle_access_token(await response.json())
+
+    def get_authorize_url(self):
+        self.state = uuid.uuid4().hex
+
+        params = {
+            'response_type' : 'code',
+            'client_id'     : self.client_id,
+            'redirect_uri'  : self.redirect_uri,
+            'scope'         : SCOPE,
+            'state'         : self.state,
+        }
+
+        return AUTH_URL + '?' + urlencode(params)
+
+    def get_code_from_url(self, url):
+        query = parse_qs(urlsplit(url).query)
+        if 'state' in query and query['state'][0] != self.state and False:
+            raise ValueError('Invalid state in url {} expected {}'.format(query['state'], self.state))
+        return query['code'][0]
+
+    async def get(self, uri, params = {}):
+
+        # Throttle requests to API
+        if self.sleep:
+            await self.sleep
+        self.sleep = asyncio.sleep(MIN_REQUEST_DELAY)
+
 
         headers = {}
         url = '%s/api/v1/%s' % (BASE_URL, uri)
-        data = self.session.get(url, params=params, headers=headers).json()
-        _LOGGER.debug(data)
-        return data
+        async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
+            data = await response.json()
+            _LOGGER.debug(response)
 
-    def update(self):
-        self.update_systems()
+            if 400 <= response.status:
+                await self.refresh_access_token()
+                data = await self.get(uri, params)
+
+            return data
+
+    async def update(self):
+        await self.update_systems()
         for system_id in self.systems.keys():
-            self.update_categories(system_id)
-            #self.update_parameters(system_id)
+            await self.update_categories(system_id)
+            await self.update_parameters(system_id)
 
-    def update_systems(self):
+    async def update_systems(self):
         _LOGGER.debug("Requesting systems")
-        data = self.get('systems')
+        data = await self.get('systems')
         for s in data['objects']:
             system = self.get_system(s['systemId'])
             system.data = s
 
-    def update_categories(self, system_id):
+    async def update_categories(self, system_id):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
         system = self.get_system(system_id)
-        data   = self.get('systems/{}/serviceinfo/categories'.format(system_id),
-                          {'parameters' : 'True'})
+        data   = await self.get('systems/{}/serviceinfo/categories'.format(system_id),
+                                {'parameters' : 'True'})
 
         for c in data:
             category = self.get_category(system_id, c['categoryId'])
@@ -123,13 +189,13 @@ class Uplink():
                 parameter = self.get_parameter(system_id, p['parameterId'])
                 parameter.data = p
 
-    def update_parameters(self, system_id):
+    async def update_parameters(self, system_id):
         system = self.get_system(system_id)
         for parameters in chunks(system.parameters, MAX_REQUEST_PARAMETERS):
-            _LOGGER.debug("Requesting parmeters {}".format(parmeters))
-            data = self.get(
+            _LOGGER.debug("Requesting parmeters {}".format(parameters))
+            data = await self.get(
                         'systems/{}/parameters'.format(system.system_id),
-                        { 'parameterIds' : parameters.keys() }
+                        { 'parameterIds' : ','.join([str(x) for x in parameters.keys()]) }
                    )
 
             for parameter in data:

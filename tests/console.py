@@ -1,5 +1,7 @@
 import logging
 import sys
+import asyncio
+from urllib.parse import urldefrag, parse_qs
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
@@ -41,19 +43,32 @@ def token_write(token):
     with open(STORE, 'wb') as myfile:
         pickle.dump(token, myfile)
 
-_LOGGER.debug(token_read())
-oauth2 = nibeuplink.OAuth2(args.client_id, args.client_secret, args.redirect_uri, token_read(), token_write)
-if not oauth2.authorized:
-	auth_uri, state = oauth2.authorization_url()
-	print(auth_uri)
-	result = input('Enter full redirect url: ')
 
-	token = oauth2.fetch_token(result)
-	print(token)
+async def run():
+
+    _LOGGER.debug(token_read())
+    async with nibeuplink.Uplink(client_id         = args.client_id,
+                                 client_secret     = args.client_secret,
+                                 redirect_uri      = args.redirect_uri,
+                                 access_data       = token_read(),
+                                 access_data_write = token_write) as uplink:
 
 
-uplink = nibeuplink.Uplink(oauth2)
-uplink.get_parameter(36563, '43424')
-uplink.get_parameter(36563, '40032')
-uplink.update()
-print(uplink.get_parameter(36563, '43424'))
+        if not uplink.access_data:
+            auth_uri = uplink.get_authorize_url()
+            print(auth_uri)
+            result = input('Enter full redirect url: ')
+            await uplink.get_access_token(uplink.get_code_from_url(result))
+
+        await uplink.update()
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete (run())
+
+
+
+#uplink = nibeuplink.Uplink(oauth2)
+#uplink.get_parameter(36563, '43424')
+#uplink.get_parameter(36563, 47398)
+#uplink.update()
+#print(uplink.get_parameter(36563, 47398))
