@@ -65,6 +65,7 @@ class Uplink():
         self.access_data       = access_data
         self.access_data_write = access_data_write
         self.state             = None
+        self.lock              = asyncio.Lock()
 
         if self.access_data:
             self.auth = BearerAuth(self.access_data['access_token'])
@@ -142,24 +143,25 @@ class Uplink():
         return query['code'][0]
 
     async def get(self, uri, params = {}):
+        async with self.lock:
 
-        # Throttle requests to API
-        if self.sleep:
-            await self.sleep
-        self.sleep = asyncio.sleep(MIN_REQUEST_DELAY)
+            # Throttle requests to API
+            if self.sleep:
+                await self.sleep
+            self.sleep = asyncio.sleep(MIN_REQUEST_DELAY)
 
 
-        headers = {}
-        url = '%s/api/v1/%s' % (BASE_URL, uri)
-        async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
-            data = await response.json()
-            _LOGGER.debug(response)
+            headers = {}
+            url = '%s/api/v1/%s' % (BASE_URL, uri)
+            async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
+                data = await response.json()
+                _LOGGER.debug(response)
 
-            if 400 <= response.status:
-                await self.refresh_access_token()
-                data = await self.get(uri, params)
+                if 400 <= response.status:
+                    await self.refresh_access_token()
+                    data = await self.get(uri, params)
 
-            return data
+                return data
 
     async def update(self):
         await self.update_systems()
