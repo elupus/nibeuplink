@@ -1,6 +1,7 @@
 import logging
 import sys
 import asyncio
+import json
 from urllib.parse import urldefrag, parse_qs
 
 root = logging.getLogger()
@@ -24,6 +25,9 @@ parser = argparse.ArgumentParser(description='Read data from nibe uplink.')
 parser.add_argument('client_id')
 parser.add_argument('client_secret')
 parser.add_argument('redirect_uri')
+
+parser.add_argument('--system', type=int)
+parser.add_argument('--parameters', nargs='+', type=int)
 
 args = parser.parse_args()
 
@@ -59,14 +63,12 @@ async def run():
             result = input('Enter full redirect url: ')
             await uplink.get_access_token(uplink.get_code_from_url(result))
 
-        todo = [
-        uplink.get_parameter_data(36563, 40008),
-        uplink.get_parameter_data(36563, 40007),
-        uplink.get_parameter_data(36563, 43136),
-        ]
+
+        if args.parameters:
+            todo = [uplink.get_parameter(args.system, p) for p in args.parameters]
 
         res = await asyncio.gather(*todo)
-        print(res)
+        print(json.dumps(res, indent=1))
 
 
 
