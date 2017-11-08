@@ -63,6 +63,7 @@ class Uplink():
         if access_data and set(scope).issubset(set(access_data['scope'].split(' '))):
             self.access_data = access_data
         else:
+            _LOGGER.info("Ignoring access data due to changed scope {}".format(scope))
             self.access_data = None
 
         if self.access_data:
