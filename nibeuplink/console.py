@@ -64,14 +64,10 @@ async def run():
     if args.setparameter:
         scope.append('WRITESYSTEM')
 
-    token = token_read()
-    if token and not set(scope).issubset(set(token['scope'].split(' '))):
-        token = None
-
     async with nibeuplink.Uplink(client_id         = args.client_id,
                                  client_secret     = args.client_secret,
                                  redirect_uri      = args.redirect_uri,
-                                 access_data       = token,
+                                 access_data       = token_read(),
                                  access_data_write = token_write,
                                  scope             = scope) as uplink:
 

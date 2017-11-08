@@ -54,11 +54,16 @@ class Uplink():
 
         self.redirect_uri      = redirect_uri
         self.client_id         = client_id
-        self.access_data       = access_data
         self.access_data_write = access_data_write
         self.state             = None
         self.scope             = scope
         self.lock              = asyncio.Lock()
+
+        # check that the access scope is enough, otherwise ignore
+        if access_data and set(scope).issubset(set(access_data['scope'].split(' '))):
+            self.access_data = access_data
+        else:
+            self.access_data = None
 
         if self.access_data:
             self.auth = BearerAuth(self.access_data['access_token'])
