@@ -5,7 +5,7 @@ from itertools import islice
 import asyncio
 import aiohttp
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
 
@@ -137,10 +137,13 @@ class Uplink():
 
     # Throttle requests to API to once every MIN_REQUEST_DELAY
     async def throttle(self):
-        delay = (datetime.now() - self.timestamp).total_seconds()
-        if delay < MIN_REQUEST_DELAY:
-            await asyncio.sleep(MIN_REQUEST_DELAY - delay)
-        self.timestamp = datetime.now()
+        timestamp = datetime.now()
+
+        delay = (self.timestamp - timestamp).total_seconds()
+        print(delay)
+        if delay > 0:
+            await asyncio.sleep(delay)
+        self.timestamp = timestamp + timedelta(seconds = MIN_REQUEST_DELAY)
 
     async def get(self, uri, params = {}):
         async with self.lock:
