@@ -63,9 +63,11 @@ async def run():
             result = input('Enter full redirect url: ')
             await uplink.get_access_token(uplink.get_code_from_url(result))
 
-
+        todo = []
         if args.parameters:
-            todo = [uplink.get_parameter(args.system, p) for p in args.parameters]
+            todo.extend([uplink.get_parameter(args.system, p) for p in args.parameters])
+        elif args.system:
+            todo.extend([uplink.get_system(args.system)])
 
         res = await asyncio.gather(*todo)
         print(json.dumps(res, indent=1))
