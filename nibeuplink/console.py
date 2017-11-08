@@ -4,16 +4,6 @@ import asyncio
 import json
 from urllib.parse import urldefrag, parse_qs
 
-root = logging.getLogger()
-root.setLevel(logging.DEBUG)
-
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-ch.setFormatter(formatter)
-root.addHandler(ch)
-
-
 import nibeuplink
 import argparse
 import pickle
@@ -37,8 +27,20 @@ parser.add_argument('--setparameter', nargs='+', type=pair)
 parser.add_argument('--units', action='store_true')
 parser.add_argument('--notifications', action='store_true')
 parser.add_argument('--unit', nargs='+', type=int)
+parser.add_argument('--verbose', action='store_true')
 
 args = parser.parse_args()
+
+if args.verbose:
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
 
 STORE = 'console.pickle'
 
@@ -116,10 +118,3 @@ def main():
     loop = asyncio.get_event_loop()
     loop.run_until_complete (run())
 
-
-
-#uplink = nibeuplink.Uplink(oauth2)
-#uplink.get_parameter(36563, '43424')
-#uplink.get_parameter(36563, 47398)
-#uplink.update()
-#print(uplink.get_parameter(36563, 47398))
