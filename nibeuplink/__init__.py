@@ -5,6 +5,7 @@ from itertools import islice
 import asyncio
 import aiohttp
 import uuid
+import multidict
 from datetime import datetime, timedelta
 
 from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
@@ -65,7 +66,8 @@ class Uplink():
             self.auth = None
 
         headers = {
-                'Accept'       : 'application/json',
+                'Accept'      : 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
         }
 
         self.session           = aiohttp.ClientSession(headers = headers, auth = aiohttp.BasicAuth(client_id, client_secret))
@@ -155,16 +157,26 @@ class Uplink():
         headers = {}
         url = '%s/api/v1/%s' % (BASE_URL, uri)
 
-        for attempt in range(0, 2):
+        response = await self.session.get(url, params=params, headers=headers, auth = self.auth)
+        try:
+            if response.status in (400, 401):
+                _LOGGER.debug(response)
+                _LOGGER.info("Attempting to refresh token due to error in request")
+                await self.refresh_access_token()
+                response.close()
+                response = await self.session.get(url, params=params, headers=headers, auth = self.auth)
 
-            async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
+            response.raise_for_status()
+
+            if 'json' in response.headers.get('CONTENT-TYPE'):
                 data = await response.json()
+            else:
+                raise ValueError('Received non json data {}'.format(response.text()))
 
-                if 400 <= response.status:
-                    await self.refresh_access_token()
-                    continue
+            return data
 
-                return data
+        finally:
+            response.close()
 
 
     async def get_parameter(self, system_id, parameter_id):
