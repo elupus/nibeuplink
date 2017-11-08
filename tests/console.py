@@ -31,6 +31,7 @@ parser.add_argument('--categories', action='store_true')
 parser.add_argument('--category', nargs='+')
 parser.add_argument('--parameter', nargs='+', type=int)
 parser.add_argument('--units', action='store_true')
+parser.add_argument('--notifications', action='store_true')
 parser.add_argument('--unit', nargs='+', type=int)
 
 args = parser.parse_args()
@@ -86,6 +87,9 @@ async def run():
 
             if args.unit:
                 todo.extend([uplink.get_unit_status(args.system, p) for p in args.unit])
+
+            if args.notifications:
+                todo.extend([uplink.get_notifications(args.system)])
 
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
