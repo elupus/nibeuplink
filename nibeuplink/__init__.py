@@ -165,7 +165,7 @@ class Uplink():
                 return data
 
 
-    async def get_parameter_data(self, system_id, parameter_id):
+    async def get_parameter(self, system_id, parameter_id):
 
         request = ParameterRequest(parameter_id)
         if system_id not in self.requests:
