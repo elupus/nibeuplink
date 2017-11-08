@@ -46,7 +46,6 @@ def token_write(token):
 
 async def run():
 
-    _LOGGER.debug(token_read())
     async with nibeuplink.Uplink(client_id         = args.client_id,
                                  client_secret     = args.client_secret,
                                  redirect_uri      = args.redirect_uri,
@@ -60,7 +59,17 @@ async def run():
             result = input('Enter full redirect url: ')
             await uplink.get_access_token(uplink.get_code_from_url(result))
 
-        await uplink.update()
+        todo = [
+        uplink.get_parameter_data(36563, 40008),
+        uplink.get_parameter_data(36563, 40007),
+        uplink.get_parameter_data(36563, 43136),
+        ]
+
+        res = await asyncio.gather(*todo)
+        print(res)
+
+
+
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete (run())

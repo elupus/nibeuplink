@@ -5,6 +5,7 @@ from itertools import islice
 import asyncio
 import aiohttp
 import uuid
+from datetime import datetime
 
 from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
 
@@ -23,6 +24,16 @@ def chunks(data, SIZE):
     for i in range(0, len(data), SIZE):
         yield {k:data[k] for k in islice(it, SIZE)}
 
+def chunk_pop(data, SIZE):
+    count = len(data)
+    if count > SIZE:
+        count = SIZE
+
+    res = data[0:count]
+    del data[0:count]
+    return res
+
+
 class BearerAuth(aiohttp.BasicAuth):
     def __init__(self, access_token):
         self.access_token = access_token
@@ -30,25 +41,12 @@ class BearerAuth(aiohttp.BasicAuth):
     def encode(self):
         return "Bearer {}".format(self.access_token)
 
-class System():
-    def __init__(self, system_id):
-        self.system_id  = system_id
-        self.parameters = {}
-        self.categories = {}
-        self.data       = None
-
-class Parameter():
-    def __init__(self, system_id, parameter_id):
-        self.system_id    = system_id
+class ParameterRequest:
+    def __init__(self, parameter_id):
         self.parameter_id = parameter_id
         self.data         = None
+        self.done         = False
 
-class Category():
-    def __init__(self, system_id, category_id):
-        self.system_id     = system_id
-        self.category_id   = category_id
-        self.name          = ''
-        self.parameter_ids = []
 
 class Uplink():
 
@@ -71,8 +69,8 @@ class Uplink():
         }
 
         self.session           = aiohttp.ClientSession(headers = headers, auth = aiohttp.BasicAuth(client_id, client_secret))
-        self.systems           = {}
-        self.sleep             = None
+        self.requests          = {}
+        self.timestamp         = datetime.now()
 
     def __del__(self):
         self.close()
@@ -136,99 +134,94 @@ class Uplink():
             raise ValueError('Invalid state in url {} expected {}'.format(query['state'], self.state))
         return query['code'][0]
 
+
+    # Throttle requests to API to once every MIN_REQUEST_DELAY
+    async def throttle(self):
+        delay = (datetime.now() - self.timestamp).total_seconds()
+        if delay < MIN_REQUEST_DELAY:
+            await asyncio.sleep(MIN_REQUEST_DELAY - delay)
+        self.timestamp = datetime.now()
+
     async def get(self, uri, params = {}):
         async with self.lock:
 
-            # Throttle requests to API
-            if self.sleep:
-                await self.sleep
-            self.sleep = asyncio.sleep(MIN_REQUEST_DELAY)
+            await self.throttle()
+            return await self._get_internal(uri, params)
 
 
-            headers = {}
-            url = '%s/api/v1/%s' % (BASE_URL, uri)
+    async def _get_internal(self, uri, params = {}):
+        headers = {}
+        url = '%s/api/v1/%s' % (BASE_URL, uri)
 
-            for attempt in range(0, 2):
+        for attempt in range(0, 2):
 
-                async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
-                    data = await response.json()
+            async with self.session.get(url, params=params, headers=headers, auth = self.auth) as response:
+                data = await response.json()
 
-                    if 400 <= response.status:
-                        await self.refresh_access_token()
-                        continue
+                if 400 <= response.status:
+                    await self.refresh_access_token()
+                    continue
 
-                    return data
+                return data
 
-    async def update(self):
-        await self.update_systems()
-        for system_id in self.systems.keys():
-            await self.update_categories(system_id)
-            await self.update_parameters(system_id)
 
-    async def update_systems(self):
+    async def get_parameter_data(self, system_id, parameter_id):
+
+        request = ParameterRequest(parameter_id)
+        if system_id not in self.requests:
+            self.requests[system_id] = []
+        self.requests[system_id].append(request)
+
+        # yield to any other runnable that want to add requests
+        await asyncio.sleep(0)
+
+        while True:
+            async with self.lock:
+
+                # check if we are already finished, by somebody elses request
+                if request.done:
+                    break
+
+                if len(self.requests[system_id]) == 0:
+                    break
+
+                # Throttle requests to API, during this new requests can be added
+                await self.throttle()
+
+
+                # chop of as many requests from start as possible
+                requests = chunk_pop(self.requests[system_id], MAX_REQUEST_PARAMETERS)
+
+                for r in requests:
+                    r.done = True
+
+                _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
+                query = ['parameterIds=' + str(x.parameter_id) for x in requests]
+                data = await self._get_internal(
+                            'systems/{}/parameters?{}'.format(system_id, '&'.join(query)),
+                       )
+                lookup = { p['parameterId']: p for p in data }
+
+                for r in requests:
+                    if r.parameter_id in lookup:
+                        r.data = lookup[r.parameter_id]
+
+        return request.data
+
+
+    async def get_systems(self):
         _LOGGER.debug("Requesting systems")
         data = await self.get('systems')
-        for s in data['objects']:
-            system = self.get_system(s['systemId'])
-            system.data = s
+        return data['objects']
 
-    async def update_categories(self, system_id):
+    async def get_categories(self, system_id):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
-        system = self.get_system(system_id)
         data   = await self.get('systems/{}/serviceinfo/categories'.format(system_id),
                                 {'parameters' : 'True'})
+        return data
 
-        for c in data:
-            category = self.get_category(system_id, c['categoryId'])
-            category.name = c['name']
-            category.parameter_ids = [ p['parameterId'] for p in c['parameters'] ]
-            for p in c['parameters']:
-                parameter = self.get_parameter(system_id, p['parameterId'])
-                parameter.data = p
 
-    async def update_parameters(self, system_id):
-        system = self.get_system(system_id)
-        for parameters in chunks(system.parameters, MAX_REQUEST_PARAMETERS):
-            _LOGGER.debug("Requesting parmeters {}".format(parameters))
-            data = await self.get(
-                        'systems/{}/parameters'.format(system.system_id),
-                        { 'parameterIds' : ','.join([str(x) for x in parameters.keys()]) }
-                   )
-
-            for parameter in data:
-                p = self.get_parameter(system.system_id, parameter['parameterId'])
-                p.data = data
-
-    def get_category(self, system_id, category_id):
-        system   = self.get_system(system_id)
-        category = None
-
-        if category_id in system.categories:
-            category = system.categories[category_id]
-        else:
-            category = Category(system_id, category_id)
-            system.categories[category_id] = category
-
-        return category
-
-    def get_system(self, system_id):
-        system = None
-        if system_id in self.systems:
-            system = self.systems[system_id]
-        else:
-            system = System(system_id)
-            self.systems[system_id] = system
-        return system
-
-    def get_parameter(self, system_id, parameter_id):
-        system    = self.get_system(system_id)
-        parameter = None
-
-        if parameter_id in system.parameters:
-            parameter = system.parameters[parameter_id]
-        else:
-            parameter = Parameter(system_id, parameter_id)
-            system.parameters[parameter_id] = parameter
-
-        return parameter
+#    async def get_system_status(self, system_id):
+#        _LOGGER.debug("Requesting status on system {}".format(system_id))
+#        return await self.get('systems/{}/status/system'.format(system_id))
