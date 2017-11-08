@@ -15,7 +15,6 @@ _LOGGER = logging.getLogger(__name__)
 
 MAX_REQUEST_PARAMETERS   = 15
 MIN_REQUEST_DELAY        = 4
-SCOPE               = 'READSYSTEM'
 BASE_URL            = 'https://api.nibeuplink.com'
 TOKEN_URL           = '%s/oauth/token' % BASE_URL
 AUTH_URL            = '%s/oauth/authorize' % BASE_URL
@@ -51,13 +50,14 @@ class ParameterRequest:
 
 class Uplink():
 
-    def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write):
+    def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write, scope = ['READSYSTEM']):
 
         self.redirect_uri      = redirect_uri
         self.client_id         = client_id
         self.access_data       = access_data
         self.access_data_write = access_data_write
         self.state             = None
+        self.scope             = scope
         self.lock              = asyncio.Lock()
 
         if self.access_data:
@@ -124,7 +124,7 @@ class Uplink():
             'response_type' : 'code',
             'client_id'     : self.client_id,
             'redirect_uri'  : self.redirect_uri,
-            'scope'         : SCOPE,
+            'scope'         : ' '.join(self.scope),
             'state'         : self.state,
         }
 
@@ -146,37 +146,44 @@ class Uplink():
             await asyncio.sleep(delay)
         self.timestamp = timestamp + timedelta(seconds = MIN_REQUEST_DELAY)
 
-    async def get(self, uri, params = {}):
+    async def get(self, url, params = {}):
         async with self.lock:
-
             await self.throttle()
-            return await self._get_internal(uri, params)
+            return await self._get_internal(url, params)
 
+    async def request(self, fun):
 
-    async def _get_internal(self, uri, params = {}):
-        headers = {}
-        url = '%s/api/v1/%s' % (BASE_URL, uri)
-
-        response = await self.session.get(url, params=params, headers=headers, auth = self.auth)
+        response = await fun()
         try:
-            if response.status in (400, 401):
+            if response.status == 401:
                 _LOGGER.debug(response)
                 _LOGGER.info("Attempting to refresh token due to error in request")
                 await self.refresh_access_token()
                 response.close()
-                response = await self.session.get(url, params=params, headers=headers, auth = self.auth)
-
-            response.raise_for_status()
+                response = await fun()
 
             if 'json' in response.headers.get('CONTENT-TYPE'):
                 data = await response.json()
             else:
-                raise ValueError('Received non json data {}'.format(response.text()))
+                data = await response.text()
+
+            if response.status >= 400:
+                _LOGGER.debug(data)
+
+            response.raise_for_status()
 
             return data
 
         finally:
             response.close()
+
+    async def _get_internal(self, url, params = {}):
+        headers = {}
+        url = '%s/api/v1/%s' % (BASE_URL, url)
+
+        return await self.request(lambda:
+            self.session.get(url, params=params, headers=headers, auth = self.auth)
+        )
 
 
     async def get_parameter(self, system_id, parameter_id):
@@ -222,6 +229,24 @@ class Uplink():
                         r.data = lookup[r.parameter_id]
 
         return request.data
+
+    async def set_parameter(self, system_id, parameter_id, value):
+        url  = '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id)
+        headers = {
+            'Accept'      : 'application/json',
+            'Content-Type': 'application/json;charset=UTF-8'
+        }
+
+        data = {
+            'settings': {
+                str(parameter_id): str(value)
+            }
+        }
+
+        return await self.request(lambda:
+            self.session.put(url, json=data, headers=headers, auth = self.auth)
+        )
+
 
     async def get_system(self, system_id):
         _LOGGER.debug("Requesting system {}".format(system_id))

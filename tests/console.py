@@ -20,6 +20,9 @@ import pickle
 
 _LOGGER = logging.getLogger(__name__)
 
+def pair(arg):
+    data = arg.split('=')
+    return (data[0], data[1])
 
 parser = argparse.ArgumentParser(description='Read data from nibe uplink.')
 parser.add_argument('client_id')
@@ -30,6 +33,7 @@ parser.add_argument('--system', type=int)
 parser.add_argument('--categories', action='store_true')
 parser.add_argument('--category', nargs='+')
 parser.add_argument('--parameter', nargs='+', type=int)
+parser.add_argument('--setparameter', nargs='+', type=pair)
 parser.add_argument('--units', action='store_true')
 parser.add_argument('--notifications', action='store_true')
 parser.add_argument('--unit', nargs='+', type=int)
@@ -55,11 +59,21 @@ def token_write(token):
 
 async def run():
 
+
+    scope = ['READSYSTEM']
+    if args.setparameter:
+        scope.append('WRITESYSTEM')
+
+    token = token_read()
+    if token and not set(scope).issubset(set(token['scope'].split(' '))):
+        token = None
+
     async with nibeuplink.Uplink(client_id         = args.client_id,
                                  client_secret     = args.client_secret,
                                  redirect_uri      = args.redirect_uri,
-                                 access_data       = token_read(),
-                                 access_data_write = token_write) as uplink:
+                                 access_data       = token,
+                                 access_data_write = token_write,
+                                 scope             = scope) as uplink:
 
 
         if not uplink.access_data:
@@ -91,9 +105,11 @@ async def run():
             if args.notifications:
                 todo.extend([uplink.get_notifications(args.system)])
 
+            if args.setparameter:
+                todo.extend([uplink.set_parameter(args.system, p[0], p[1]) for p in args.setparameter])
+
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
-
 
         res = await asyncio.gather(*todo)
         print(json.dumps(res, indent=1))
