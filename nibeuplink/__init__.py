@@ -281,10 +281,13 @@ class Uplink():
                                 {'parameters' : str(parameters)})
         return data
 
-    async def get_status(self, system_id):
+    async def get_status_raw(self, system_id):
         _LOGGER.debug("Requesting status on system {}".format(system_id))
         return await self.get('systems/{}/status/system'.format(system_id))
 
+    async def get_status(self, system_id):
+        data = await self.get_status_raw(system_id)
+        return data
     async def get_units(self, system_id):
         _LOGGER.debug("Requesting units on system {}".format(system_id))
         return await self.get('systems/{}/units'.format(system_id))

@@ -21,6 +21,7 @@ parser.add_argument('--redirect_uri' , required=True)
 parser.add_argument('--system', type=int)
 parser.add_argument('--categories', action='store_true')
 parser.add_argument('--category', nargs='+')
+parser.add_argument('--status', action='store_true')
 parser.add_argument('--parameter', nargs='+', type=int)
 parser.add_argument('--setparameter', nargs='+', type=pair)
 parser.add_argument('--units', action='store_true')
@@ -92,6 +93,9 @@ async def run():
 
             if args.category:
                 todo.extend([uplink.get_category(args.system, p) for p in args.category])
+
+            if args.status:
+                todo.extend([uplink.get_status(args.system)])
 
             if args.units:
                 todo.extend([uplink.get_units(args.system)])
