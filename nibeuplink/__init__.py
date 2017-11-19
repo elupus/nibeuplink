@@ -14,7 +14,6 @@ from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
 _LOGGER = logging.getLogger(__name__)
 
 MAX_REQUEST_PARAMETERS   = 15
-MIN_REQUEST_DELAY        = 4
 BASE_URL            = 'https://api.nibeuplink.com'
 TOKEN_URL           = '%s/oauth/token' % BASE_URL
 AUTH_URL            = '%s/oauth/authorize' % BASE_URL
@@ -49,6 +48,8 @@ class ParameterRequest:
 
 
 class Uplink():
+
+    THROTTLE = timedelta(seconds = 4)
 
     def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write, scope = ['READSYSTEM']):
 
@@ -153,7 +154,7 @@ class Uplink():
         delay = (self.timestamp - timestamp).total_seconds()
         if delay > 0:
             await asyncio.sleep(delay)
-        self.timestamp = timestamp + timedelta(seconds = MIN_REQUEST_DELAY)
+        self.timestamp = timestamp + self.THROTTLE
 
     async def get(self, url, params = {}):
         async with self.lock:
