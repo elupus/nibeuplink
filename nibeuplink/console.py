@@ -6,7 +6,6 @@ from urllib.parse import urldefrag, parse_qs
 
 import nibeuplink
 import argparse
-import pickle
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,12 +41,12 @@ if args.verbose:
     root.addHandler(ch)
 
 
-STORE = 'console.pickle'
+STORE = 'nibeuplink.json'
 
 def token_read():
     try:
-        with open(STORE, 'rb') as myfile:
-            return pickle.load(myfile)
+        with open(STORE, 'r') as myfile:
+            return json.load(myfile)
     except FileNotFoundError:
         return None
     except:
@@ -55,8 +54,8 @@ def token_read():
         return None
 
 def token_write(token):
-    with open(STORE, 'wb') as myfile:
-        pickle.dump(token, myfile)
+    with open(STORE, 'w') as myfile:
+        json.dump(token, myfile, indent=2)
 
 
 async def run():
