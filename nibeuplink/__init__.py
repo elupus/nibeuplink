@@ -58,6 +58,7 @@ class Uplink():
         self.state             = None
         self.scope             = scope
         self.lock              = asyncio.Lock()
+        self.session           = None
 
         # check that the access scope is enough, otherwise ignore
         if access_data and set(scope).issubset(set(access_data['scope'].split(' '))):
@@ -90,7 +91,9 @@ class Uplink():
         self.close()
 
     def close(self):
-        self.session.close()
+        if self.session:
+            self.session.close()
+            self.session = None
 
     def handle_access_token(self, data):
         if 'access_token' not in data:
