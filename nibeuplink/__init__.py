@@ -196,7 +196,7 @@ class Uplink():
         )
 
 
-    async def get_parameter(self, system_id, parameter_id):
+    async def get_parameter_raw(self, system_id, parameter_id):
 
         request = ParameterRequest(parameter_id)
         if system_id not in self.requests:
@@ -240,6 +240,27 @@ class Uplink():
 
         return request.data
 
+    def add_parameter_extensions(self, data):
+        if data:
+            if data['displayValue'].endswith(data['unit']) and len(data['unit']):
+                value = data['displayValue'][:-len(data['unit'])]
+
+                try:
+                    value = float(value)
+                except ValueError:
+                    pass
+
+                data['value'] = value
+            else:
+                data['value'] = data['displayValue']
+
+
+
+    async def get_parameter(self, system_id, parameter_id):
+        data = await self.get_parameter_raw(system_id, parameter_id)
+        self.add_parameter_extensions(data)
+        return data
+
     async def set_parameter(self, system_id, parameter_id, value):
         url  = '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id)
         headers = {
@@ -260,26 +281,28 @@ class Uplink():
 
     async def get_system(self, system_id):
         _LOGGER.debug("Requesting system {}".format(system_id))
-        data = await self.get('systems/{}'.format(system_id))
-        return data
-
+        return await self.get('systems/{}'.format(system_id))
 
     async def get_systems(self):
         _LOGGER.debug("Requesting systems")
         data = await self.get('systems')
         return data['objects']
 
-    async def get_category(self, system_id, category_id):
+    async def get_category_raw(self, system_id, category_id):
         _LOGGER.debug("Requesting category {} on system {}".format(category_id, system_id))
-        data   = await self.get('systems/{}/serviceinfo/categories/{}'.format(system_id, category_id))
+        return await self.get('systems/{}/serviceinfo/categories/{}'.format(system_id, category_id))
+
+    async def get_category(self, system_id, category_id):
+        data = await self.get_category_raw(system_id, category_id)
+        for param in data:
+            self.add_parameter_extensions(param)
         return data
 
     async def get_categories(self, system_id, parameters):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
-        data   = await self.get('systems/{}/serviceinfo/categories'.format(system_id),
+        return await self.get('systems/{}/serviceinfo/categories'.format(system_id),
                                 {'parameters' : str(parameters)})
-        return data
 
     async def get_status_raw(self, system_id):
         _LOGGER.debug("Requesting status on system {}".format(system_id))
@@ -287,7 +310,11 @@ class Uplink():
 
     async def get_status(self, system_id):
         data = await self.get_status_raw(system_id)
+        for status in data:
+            for param in status['parameters']:
+                self.add_parameter_extensions(param)
         return data
+
     async def get_units(self, system_id):
         _LOGGER.debug("Requesting units on system {}".format(system_id))
         return await self.get('systems/{}/units'.format(system_id))
