@@ -12,6 +12,6 @@ setup(
         'aiohttp',
     ],
     entry_points = {
-        'console_scripts' : ['nibeuplink.console=nibeuplink.console:main']
+        'console_scripts' : ['nibeuplink=nibeuplink.console:main']
     }
 )
