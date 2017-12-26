@@ -323,7 +323,7 @@ class Uplink():
         _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
         return await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
 
-    async def get_notifications(self, system_id, active = True, notifiction_type = 'ALARM'):
+    async def get_notifications2(self, system_id, active = True, notifiction_type = 'ALARM'):
         _LOGGER.debug("Requesting notifications on system {}".format(system_id))
         params = { 'active'      : str(active),
                    'itemsPerPage': 100,
@@ -331,3 +331,123 @@ class Uplink():
         }
         data = await self.get('systems/{}/notifications'.format(system_id), params = params)
         return data['objects']
+
+    async def get_notifications(self, system_id):
+        return [
+    {
+      "notificationId": 1,
+      "systemUnitId": 3,
+      "moduleName": "sample string 4",
+      "occuredAt": "2017-12-26T10:38:06Z",
+      "stoppedAt": "2017-12-26T10:38:06Z",
+      "wasReset": True,
+      "resetPossible": True,
+      "aidmodePossible": True,
+      "info": {
+        "alarmNumber": 1,
+        "type": "ALARM",
+        "title": "sample string 2",
+        "description": "sample string 3"
+      },
+      "comments": [
+        {
+          "authorName": "sample string 1",
+          "authorAvatar": {
+            "name": None,
+            "sizes": [
+              {
+                "width": 35,
+                "height": 35,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
+              },
+              {
+                "width": 50,
+                "height": 50,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
+              }
+            ]
+          },
+          "creationDate": "2017-12-26T10:38:06Z",
+          "text": "sample string 3"
+        },
+        {
+          "authorName": "sample string 1",
+          "authorAvatar": {
+            "name": None,
+            "sizes": [
+              {
+                "width": 35,
+                "height": 35,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
+              },
+              {
+                "width": 50,
+                "height": 50,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
+              }
+            ]
+          },
+          "creationDate": "2017-12-26T10:38:06Z",
+          "text": "sample string 3"
+        }
+      ]
+    },
+    {
+      "notificationId": 1,
+      "systemUnitId": 3,
+      "moduleName": "sample string 4",
+      "occuredAt": "2017-12-26T10:38:06Z",
+      "stoppedAt": "2017-12-26T10:38:06Z",
+      "wasReset": True,
+      "resetPossible": True,
+      "aidmodePossible": True,
+      "info": {
+        "alarmNumber": 1,
+        "type": "ALARM",
+        "title": "sample string 2",
+        "description": "sample string 3"
+      },
+      "comments": [
+        {
+          "authorName": "sample string 1",
+          "authorAvatar": {
+            "name": None,
+            "sizes": [
+              {
+                "width": 35,
+                "height": 35,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
+              },
+              {
+                "width": 50,
+                "height": 50,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
+              }
+            ]
+          },
+          "creationDate": "2017-12-26T10:38:06Z",
+          "text": "sample string 3"
+        },
+        {
+          "authorName": "sample string 1",
+          "authorAvatar": {
+            "name": None,
+            "sizes": [
+              {
+                "width": 35,
+                "height": 35,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
+              },
+              {
+                "width": 50,
+                "height": 50,
+                "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
+              }
+            ]
+          },
+          "creationDate": "2017-12-26T10:38:06Z",
+          "text": "sample string 3"
+        }
+      ]
+    }
+  ]
