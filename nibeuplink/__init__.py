@@ -329,4 +329,5 @@ class Uplink():
                    'itemsPerPage': 100,
                    'type'        : notifiction_type,
         }
-        return await self.get('systems/{}/notifications'.format(system_id), params = params)
+        data = await self.get('systems/{}/notifications'.format(system_id), params = params)
+        return data['objects']
