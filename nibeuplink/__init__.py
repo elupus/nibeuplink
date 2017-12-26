@@ -323,6 +323,10 @@ class Uplink():
         _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
         return await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
 
-    async def get_notifications(self, system_id):
+    async def get_notifications(self, system_id, active = True, notifiction_type = 'ALARM'):
         _LOGGER.debug("Requesting notifications on system {}".format(system_id))
-        return await self.get('systems/{}/notifications'.format(system_id))
+        params = { 'active'      : str(active),
+                   'itemsPerPage': 100,
+                   'type'        : notifiction_type,
+        }
+        return await self.get('systems/{}/notifications'.format(system_id), params = params)
