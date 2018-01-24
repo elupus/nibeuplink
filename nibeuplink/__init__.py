@@ -146,7 +146,7 @@ class Uplink():
 
 
     # Throttle requests to API to once every MIN_REQUEST_DELAY
-    async def throttle(self):
+    async def _get_throttle(self):
         timestamp = datetime.now()
 
         delay = (self.timestamp - timestamp).total_seconds()
@@ -156,7 +156,7 @@ class Uplink():
 
     async def get(self, url, params = {}):
         async with self.lock:
-            await self.throttle()
+            await self._get_throttle()
             return await self._get_internal(url, params)
 
     async def request(self, fun):
@@ -215,7 +215,7 @@ class Uplink():
                     break
 
                 # Throttle requests to API, during this new requests can be added
-                await self.throttle()
+                await self._get_throttle()
 
 
                 # chop of as many requests from start as possible
