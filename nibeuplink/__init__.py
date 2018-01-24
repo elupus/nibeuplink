@@ -51,7 +51,7 @@ class Uplink():
 
     THROTTLE = timedelta(seconds = 4)
 
-    def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write, scope = ['READSYSTEM']):
+    def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write, scope = ['READSYSTEM'], loop = None):
 
         self.redirect_uri      = redirect_uri
         self.client_id         = client_id
@@ -60,6 +60,7 @@ class Uplink():
         self.scope             = scope
         self.lock              = asyncio.Lock()
         self.session           = None
+        self.loop              = loop
 
         # check that the access scope is enough, otherwise ignore
         if access_data and set(scope).issubset(set(access_data['scope'].split(' '))):
