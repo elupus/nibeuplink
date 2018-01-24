@@ -140,7 +140,7 @@ class Uplink():
 
     def get_code_from_url(self, url):
         query = parse_qs(urlsplit(url).query)
-        if 'state' in query and query['state'][0] != self.state and False:
+        if 'state' in query and query['state'][0] != self.state:
             raise ValueError('Invalid state in url {} expected {}'.format(query['state'], self.state))
         return query['code'][0]
 
