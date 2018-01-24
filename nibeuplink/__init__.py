@@ -82,18 +82,15 @@ class Uplink():
         self.requests          = {}
         self.timestamp         = datetime.now()
 
-    def __del__(self):
-        self.close()
-
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        await self.close()
 
-    def close(self):
+    async def close(self):
         if self.session:
-            self.session.close()
+            await self.session.close()
             self.session = None
 
     def handle_access_token(self, data):
