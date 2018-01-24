@@ -157,18 +157,25 @@ class Uplink():
     async def get(self, url, params = {}):
         async with self.lock:
             await self._get_throttle()
-            return await self._get_internal(url, params)
 
-    async def request(self, fun):
+            return await self._request(
+                self.session.get,
+                '{}/api/v1/{}'.format(BASE_URL, url),
+                params = params,
+                headers= {},
+                auth   = self.auth
+            )
 
-        response = await fun()
+    async def _request(self, fun, *args, **kw):
+
+        response = await fun(*args, **kw)
         try:
             if response.status == 401:
                 _LOGGER.debug(response)
                 _LOGGER.info("Attempting to refresh token due to error in request")
                 await self.refresh_access_token()
                 response.close()
-                response = await fun()
+                response = await fun(*args, **kw)
 
             if 'json' in response.headers.get('CONTENT-TYPE'):
                 data = await response.json()
@@ -184,15 +191,6 @@ class Uplink():
 
         finally:
             response.close()
-
-    async def _get_internal(self, url, params = {}):
-        headers = {}
-        url = '%s/api/v1/%s' % (BASE_URL, url)
-
-        return await self.request(lambda:
-            self.session.get(url, params=params, headers=headers, auth = self.auth)
-        )
-
 
     async def get_parameter_raw(self, system_id, parameter_id):
 
@@ -225,11 +223,16 @@ class Uplink():
                     r.done = True
 
                 _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
-                params = [('parameterIds', str(x.parameter_id)) for x in requests]
-                data = await self._get_internal(
-                            'systems/{}/parameters'.format(system_id),
-                            params = params
-                       )
+
+                data = await self._request(
+                    self.session.get,
+                    '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id),
+                    params  = [('parameterIds', str(x.parameter_id)) for x in requests],
+                    headers = {},
+                    auth    = self.auth
+                )
+
+
                 lookup = { p['parameterId']: p for p in data }
 
                 for r in requests:
@@ -260,7 +263,6 @@ class Uplink():
         return data
 
     async def set_parameter(self, system_id, parameter_id, value):
-        url  = '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id)
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
@@ -272,10 +274,13 @@ class Uplink():
             }
         }
 
-        return await self.request(lambda:
-            self.session.put(url, json=data, headers=headers, auth = self.auth)
+        return await self._request(
+            self.session.put,
+            '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id),
+            json    = data,
+            headers = headers,
+            auth    = self.auth
         )
-
 
     async def get_system(self, system_id):
         _LOGGER.debug("Requesting system {}".format(system_id))
