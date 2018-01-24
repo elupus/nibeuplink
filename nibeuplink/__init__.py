@@ -94,7 +94,7 @@ class Uplink():
             await self.session.close()
             self.session = None
 
-    def handle_access_token(self, data):
+    def _handle_access_token(self, data):
         if 'access_token' not in data:
             raise ValueError('Error in reply {}'.format(data))
 
@@ -112,7 +112,7 @@ class Uplink():
 
         async with self.session.post(TOKEN_URL, data=payload) as response:
             response.raise_for_status()
-            self.handle_access_token(await response.json())
+            self._handle_access_token(await response.json())
 
 
     async def refresh_access_token(self):
@@ -123,7 +123,7 @@ class Uplink():
 
         async with self.session.post(TOKEN_URL, data=payload) as response:
             response.raise_for_status()
-            self.handle_access_token(await response.json())
+            self._handle_access_token(await response.json())
 
     def get_authorize_url(self):
         self.state = uuid.uuid4().hex
