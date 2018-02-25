@@ -30,6 +30,15 @@ def chunk_pop(data, SIZE):
     return res
 
 
+async def raise_for_status(response):
+    if 400 <= response.status:
+        raise aiohttp.ClientResponseError(
+            response.request_info,
+            response.history,
+            code=response.status,
+            message=await response.text(),
+            headers=response.headers)
+
 class BearerAuth(aiohttp.BasicAuth):
     def __init__(self, access_token):
         self.access_token = access_token
@@ -194,7 +203,7 @@ class Uplink():
             if response.status >= 400:
                 _LOGGER.debug(data)
 
-            response.raise_for_status()
+            await raise_for_status(response)
 
             return data
 
