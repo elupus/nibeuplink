@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import socket
 import ssl
@@ -8,6 +9,8 @@ import aiohttp
 from aiohttp            import web
 from aiohttp.resolver   import DefaultResolver
 from aiohttp.test_utils import unused_port
+
+_LOGGER = logging.getLogger(__name__)
 
 class JsonError(Exception):
     def __init__(self, status, error, description):
@@ -45,6 +48,7 @@ class Uplink:
 
 
     async def start(self):
+        print("Starting fake uplink")
         port = unused_port()
         host = '127.0.0.1'
 
@@ -56,6 +60,7 @@ class Uplink:
         self.redirect = '{}/redirect'.format(self.base)
 
     async def stop(self):
+        _LOGGER.info("Stopping fake uplink")
         self.server.close()
         await self.server.wait_closed()
         await self.app.shutdown()
@@ -67,7 +72,6 @@ class Uplink:
     @oauth_error_response
     async def on_oauth_token(self, request):
         data = await request.post()
-        print(data)
         if data['grant_type'] == 'authorization_code':
             data = {
                 'access_token' : 'dummyaccesstoken',
@@ -87,7 +91,7 @@ class Uplink:
     async def on_oauth_authorize(self, request):
         data = await request.post()
         query = request.query
-        print(query)
+        _LOGGER.info(query)
         assert 'redirect_uri'  in query
         assert 'response_type' in query
         assert 'scope'         in query

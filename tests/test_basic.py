@@ -1,3 +1,4 @@
+import logging
 import pytest
 import nibeuplink
 import asyncio
@@ -5,6 +6,9 @@ import socket
 import aiohttp
 from   aiohttp import web
 import fake_uplink
+
+logging.basicConfig(level=logging.DEBUG)
+
 
 DEFAULT_CLIENT_ID     = '12345'
 DEFAULT_CLIENT_SECRET = '4567'
@@ -17,7 +21,6 @@ async def default_uplink(event_loop):
     def access_write(data):
         pass
 
-    print("\nStarting server")
     server = fake_uplink.Uplink(event_loop)
 
     await server.start()
@@ -79,7 +82,6 @@ async def test_get_get_access_token(default_uplink):
 async def test_auth_flow(default_uplink):
     url = default_uplink[0].get_authorize_url()
     redirect = await default_uplink[0].session.post(url, allow_redirects = False)
-    print(redirect)
     assert redirect.status == 302
     assert redirect.headers['Location'].startswith(default_uplink[1].redirect)
 
