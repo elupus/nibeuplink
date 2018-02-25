@@ -179,7 +179,7 @@ class Uplink():
 
             return await self._request(
                 self.session.get,
-                '{}/api/v1/{}'.format(BASE_URL, url),
+                '{}/api/v1/{}'.format(self.base, url),
                 params = params,
                 headers= {},
                 auth   = self.auth
