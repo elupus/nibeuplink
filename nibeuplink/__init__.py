@@ -14,9 +14,6 @@ from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
 _LOGGER = logging.getLogger(__name__)
 
 MAX_REQUEST_PARAMETERS   = 15
-BASE_URL            = 'https://api.nibeuplink.com'
-TOKEN_URL           = '%s/oauth/token' % BASE_URL
-AUTH_URL            = '%s/oauth/authorize' % BASE_URL
 
 def chunks(data, SIZE):
     it = iter(data)
@@ -51,7 +48,15 @@ class Uplink():
 
     THROTTLE = timedelta(seconds = 4)
 
-    def __init__(self, client_id, client_secret, redirect_uri, access_data, access_data_write, scope = ['READSYSTEM'], loop = None):
+    def __init__(self,
+                 client_id,
+                 client_secret,
+                 redirect_uri,
+                 access_data,
+                 access_data_write,
+                 scope     = ['READSYSTEM'],
+                 loop      = None,
+                 base      = 'https://api.nibeuplink.com'):
 
         self.redirect_uri      = redirect_uri
         self.client_id         = client_id
@@ -61,6 +66,7 @@ class Uplink():
         self.lock              = asyncio.Lock()
         self.session           = None
         self.loop              = loop
+        self.base              = base
 
         # check that the access scope is enough, otherwise ignore
         if access_data and set(scope).issubset(set(access_data['scope'].split(' '))):
@@ -79,7 +85,8 @@ class Uplink():
                 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
         }
 
-        self.session           = aiohttp.ClientSession(headers = headers, auth = aiohttp.BasicAuth(client_id, client_secret))
+        self.session           = aiohttp.ClientSession(headers   = headers,
+                                                       auth      = aiohttp.BasicAuth(client_id, client_secret))
         self.requests          = {}
         self.timestamp         = datetime.now()
 
@@ -110,8 +117,9 @@ class Uplink():
             'redirect_uri' : self.redirect_uri,
         }
 
-        async with self.session.post(TOKEN_URL, data=payload) as response:
-            response.raise_for_status()
+        async with self.session.post('{}/oauth/token'.format(self.base),
+                                     data=payload) as response:
+            await raise_for_status(response)
             self._handle_access_token(await response.json())
 
 
@@ -121,8 +129,9 @@ class Uplink():
             'refresh_token' : self.access_data['refresh_token'],
         }
 
-        async with self.session.post(TOKEN_URL, data=payload) as response:
-            response.raise_for_status()
+        async with self.session.post('{}/oauth/token'.format(self.base),
+                                     data=payload) as response:
+            await raise_for_status(response)
             self._handle_access_token(await response.json())
 
     def get_authorize_url(self):
@@ -136,7 +145,7 @@ class Uplink():
             'state'         : self.state,
         }
 
-        return AUTH_URL + '?' + urlencode(params)
+        return '{}/oauth/authorize?{}'.format(self.base, urlencode(params))
 
     def get_code_from_url(self, url):
         query = parse_qs(urlsplit(url).query)
