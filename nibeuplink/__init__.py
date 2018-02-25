@@ -76,13 +76,14 @@ class Uplink():
         self.session           = None
         self.loop              = loop
         self.base              = base
+        self.access_data       = None
 
         # check that the access scope is enough, otherwise ignore
-        if access_data and set(scope).issubset(set(access_data['scope'].split(' '))):
-            self.access_data = access_data
-        else:
-            _LOGGER.info("Ignoring access data due to changed scope {}".format(scope))
-            self.access_data = None
+        if access_data:
+            if set(scope).issubset(set(access_data['scope'].split(' '))):
+                self.access_data = access_data
+            else:
+                _LOGGER.info("Ignoring access data due to changed scope {}".format(scope))
 
         if self.access_data:
             self.auth = BearerAuth(self.access_data['access_token'])
