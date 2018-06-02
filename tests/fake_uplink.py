@@ -40,11 +40,13 @@ class Uplink:
         self.app.router.add_routes([
             web.post('/oauth/token', self.on_oauth_token),
             web.post('/oauth/authorize', self.on_oauth_authorize),
+            web.get('/api/v1/systems/{systemId}/notifications', self.on_notifications),
         ])
         self.handler  = None
         self.server   = None
         self.base     = None
         self.redirect = None
+        self.systems  = {}
 
 
     async def start(self):
@@ -104,3 +106,76 @@ class Uplink:
         })
 
         return aiohttp.web.HTTPFound(urlunsplit(url))
+
+    def add_parameter(self, systemid, parameter):
+        self.systems[systemid] = {}
+
+    async def on_notifications(self, request):
+        systemId = request.match_info['systemId']
+        return web.json_response(
+            {
+              "page": 1,
+              "itemsPerPage": 2,
+              "numItems": 1,
+              "objects": [
+                  {
+                    "notificationId": 1,
+                    "systemUnitId": 3,
+                    "moduleName": "sample string 4",
+                    "occuredAt": "2017-12-26T10:38:06Z",
+                    "stoppedAt": "2017-12-26T10:38:06Z",
+                    "wasReset": True,
+                    "resetPossible": True,
+                    "aidmodePossible": True,
+                    "info": {
+                      "alarmNumber": 1,
+                      "type": "ALARM",
+                      "title": "sample string 2",
+                      "description": "sample string 3"
+                    },
+                    "comments": [
+                      {
+                        "authorName": "sample string 1",
+                        "authorAvatar": {
+                          "name": None,
+                          "sizes": [
+                            {
+                              "width": 35,
+                              "height": 35,
+                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
+                            },
+                            {
+                              "width": 50,
+                              "height": 50,
+                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
+                            }
+                          ]
+                        },
+                        "creationDate": "2017-12-26T10:38:06Z",
+                        "text": "sample string 3"
+                      },
+                      {
+                        "authorName": "sample string 1",
+                        "authorAvatar": {
+                          "name": None,
+                          "sizes": [
+                            {
+                              "width": 35,
+                              "height": 35,
+                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
+                            },
+                            {
+                              "width": 50,
+                              "height": 50,
+                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
+                            }
+                          ]
+                        },
+                        "creationDate": "2017-12-26T10:38:06Z",
+                        "text": "sample string 3"
+                      }
+                    ]
+                  },
+                ]
+              }
+          )

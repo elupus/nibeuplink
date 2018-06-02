@@ -85,3 +85,6 @@ async def test_auth_flow(default_uplink):
     assert redirect.status == 302
     assert redirect.headers['Location'].startswith(default_uplink[1].redirect)
 
+@pytest.mark.asyncio
+async def test_notifications(default_uplink):
+    notifications = await default_uplink[0].get_notifications(1)
