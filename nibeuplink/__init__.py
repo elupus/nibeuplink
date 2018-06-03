@@ -245,7 +245,7 @@ class Uplink():
 
                 data = await self._request(
                     self.session.get,
-                    '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id),
+                    '{}/api/v1/systems/{}/parameters'.format(self.base, system_id),
                     params  = [('parameterIds', str(x.parameter_id)) for x in requests],
                     headers = {},
                     auth    = self.auth
