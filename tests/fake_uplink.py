@@ -8,6 +8,7 @@ from collections import (defaultdict, namedtuple)
 
 import aiohttp
 from aiohttp            import web
+from aiohttp.web_exceptions import HTTPUnauthorized
 from aiohttp.resolver   import DefaultResolver
 from aiohttp.test_utils import unused_port
 
@@ -51,7 +52,7 @@ class Uplink:
         self.redirect = None
         self.systems  = {}
         self.requests = defaultdict(int)
-
+        self.tokens   = {}
 
     async def start(self):
         print("Starting fake uplink")
@@ -77,8 +78,10 @@ class Uplink:
 
     @oauth_error_response
     async def on_oauth_token(self, request):
+        self.requests['on_oauth_token'] = self.requests['on_oauth_token'] + 1
         data = await request.post()
         if data['grant_type'] == 'authorization_code':
+            self.tokens['dummyaccesstoken'] = True
             data = {
                 'access_token' : 'dummyaccesstoken',
                 'expires_in'   : 300,
@@ -89,7 +92,19 @@ class Uplink:
             return web.json_response(data = data)
 
         elif data['grant_type'] == 'refresh_token':
-            raise Exception("not implemented")
+            if data['refresh_token'] == 'dummyrefreshtoken':
+                self.tokens['dummyaccesstoken'] = True
+
+                data = {
+                    'access_token' : 'dummyaccesstoken',
+                    'expires_in'   : 300,
+                    'refresh_token': 'dummyrefreshtoken',
+                    'scopes'       : 'READSYSTEM',
+                    'token_type'   : 'bearer',
+                }
+                return web.json_response(data = data)
+            else:
+                raise Exception("unexpected refresh token")
         else:
             raise JsonError(400, "invalid_request", 'unknown grant_type: {}'.format(data['grant_type']))
     
@@ -111,6 +126,10 @@ class Uplink:
 
         return aiohttp.web.HTTPFound(urlunsplit(url))
 
+    def expire_tokens(self):
+        for t in self.tokens:
+            self.tokens[t] = False
+
     def add_system(self, systemid):
         self.systems[systemid] = System({}, {})
 
@@ -120,7 +139,20 @@ class Uplink:
     def add_notification(self, systemid, notification):
         self.systems[systemid].notifications[notification['notificationId']] = notification
 
+    async def check_auth(self, request):
+        auth = request.headers.get('AUTHORIZATION')
+
+        if not auth.startswith('Bearer '):
+            raise HTTPUnauthorized()
+        token = auth[7:]
+        if token not in self.tokens:
+            raise HTTPUnauthorized()
+
+        if not self.tokens[token]:
+            raise HTTPUnauthorized()
+
     async def on_notifications(self, request):
+        await self.check_auth(request)
         self.requests['on_notifications'] = self.requests['on_notifications'] + 1
 
         systemid = int(request.match_info['systemId'])
@@ -136,6 +168,7 @@ class Uplink:
           )
 
     async def on_parameters(self, request):
+        await self.check_auth(request)
         self.requests['on_parameters'] = self.requests['on_parameters'] + 1
 
         systemid    = int(request.match_info['systemId'])

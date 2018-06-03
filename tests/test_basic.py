@@ -15,6 +15,8 @@ DEFAULT_CLIENT_SECRET = '4567'
 DEFAULT_SCOPE         = ['A', 'B', 'C']
 DEFAULT_CODE          = '789'
 
+DEFAULT_SYSTEMID      = 123456
+
 @pytest.mark.asyncio
 @pytest.fixture
 async def default_uplink(event_loop):
@@ -35,6 +37,30 @@ async def default_uplink(event_loop):
         yield uplink, server
 
     await server.stop()
+
+
+@pytest.mark.asyncio
+@pytest.fixture
+async def uplink_with_data(default_uplink):
+
+    default_uplink[1].add_system(DEFAULT_SYSTEMID)
+
+    default_uplink[1].add_parameter(DEFAULT_SYSTEMID, {
+            'parameterId' : 100,
+            'displayValue': '100 Unit',
+            'name' : 'Parameter Name',
+            'title': 'Paramter Title',
+            'unit': 'Unit',
+            'designation': 'Designation',
+            'rawValue': 100
+        })
+
+    # Make sure we have a token
+    await default_uplink[0].get_access_token(DEFAULT_CODE)
+
+    yield default_uplink[0], default_uplink[1]
+
+
 
 @pytest.mark.asyncio
 async def test_status(default_uplink):
@@ -87,8 +113,10 @@ async def test_auth_flow(default_uplink):
 
 @pytest.mark.asyncio
 async def test_notifications(default_uplink):
-    default_uplink[1].add_system(123456)
-    default_uplink[1].add_notification(123456, {
+    await default_uplink[0].get_access_token('goodcode')
+
+    default_uplink[1].add_system(DEFAULT_SYSTEMID)
+    default_uplink[1].add_notification(DEFAULT_SYSTEMID, {
             "notificationId": 1,
             "systemUnitId": 3,
             "moduleName": "sample string 4",
@@ -147,46 +175,39 @@ async def test_notifications(default_uplink):
             ]
         }
     )
-    notifications = await default_uplink[0].get_notifications(123456)
+    notifications = await default_uplink[0].get_notifications(DEFAULT_SYSTEMID)
     assert notifications[0]['systemUnitId'] == 3
 
 @pytest.mark.asyncio
-async def test_single_parameter(default_uplink):
-    systemid = 123456
-    default_uplink[1].add_system(systemid)
+async def test_token_refresh(uplink_with_data):
+    uplink = uplink_with_data[0]
+    server = uplink_with_data[1]
+    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
+    assert parameter['displayValue'] == '100 Unit'
 
-    default_uplink[1].add_parameter(systemid, {
-            'parameterId' : 100,
-            'displayValue': str(100),
-            'name' : 'Parameter Name',
-            'title': 'Paramter Title',
-            'unit': 'Unit',
-            'designation': 'Designation',
-            'rawValue': 100
-        })
+    on_oauth_token = server.requests['on_oauth_token']
+    server.expire_tokens()
 
+    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
+    assert parameter['displayValue'] == '100 Unit'
+    assert server.requests['on_oauth_token'] == on_oauth_token + 1
 
-    parameter = await default_uplink[0].get_parameter(systemid, 100)
-
-    assert parameter['displayValue'] == '100'
 
 @pytest.mark.asyncio
-async def test_parameters_unit(default_uplink):
-    systemid = 123456
-    default_uplink[1].add_system(systemid)
+async def test_single_parameter(uplink_with_data):
+    uplink = uplink_with_data[0]
+    server = uplink_with_data[1]
 
-    default_uplink[1].add_parameter(systemid, {
-            'parameterId' : 100,
-            'displayValue': '{} Unit'.format(100),
-            'name' : 'Parameter Name',
-            'title': 'Paramter Title',
-            'unit': 'Unit',
-            'designation': 'Designation',
-            'rawValue': 100
-        })
+    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
 
+    assert parameter['displayValue'] == '100 Unit'
 
-    parameter = await default_uplink[0].get_parameter(systemid, 100)
+@pytest.mark.asyncio
+async def test_parameters_unit(uplink_with_data):
+    uplink = uplink_with_data[0]
+    server = uplink_with_data[1]
+
+    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
 
     assert parameter['displayValue'] == '100 Unit'
     assert parameter['unit'] == 'Unit'
@@ -195,8 +216,12 @@ async def test_parameters_unit(default_uplink):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('count', [1, 15, 16])
 async def test_parameters(default_uplink, count):
-    systemid = 123456
-    default_uplink[1].add_system(systemid)
+    uplink = default_uplink[0]
+    server = default_uplink[1]
+
+    await uplink.get_access_token('goodcode')
+
+    server.add_system(DEFAULT_SYSTEMID)
     parameterids  = range(100,100+count)
 
     data = [
@@ -213,11 +238,11 @@ async def test_parameters(default_uplink, count):
     ]
 
     for d in data:
-        default_uplink[1].add_parameter(systemid, d)
+        server.add_parameter(DEFAULT_SYSTEMID, d)
 
 
     requests = [
-        default_uplink[0].get_parameter(systemid, parameterid)
+        uplink.get_parameter(DEFAULT_SYSTEMID, parameterid)
         for parameterid in parameterids
     ]
 
@@ -228,4 +253,4 @@ async def test_parameters(default_uplink, count):
         assert parameters[index]['displayValue'] == data[index]['displayValue']
 
     # Check that we don't issue more requests than we need
-    assert default_uplink[1].requests['on_parameters'] == int((len(parameterids) + 14) / 15)
+    assert server.requests['on_parameters'] == int((len(parameterids) + 14) / 15)
