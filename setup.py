@@ -13,6 +13,7 @@ setup(
     ],
     tests_require=[
         'pytest',
+        'pytest-asyncio',
         'pytest-aiohttp',
     ],
     entry_points = {

@@ -4,6 +4,7 @@ import socket
 import ssl
 from functools import wraps
 from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit, parse_qs, parse_qsl
+from collections import (defaultdict, namedtuple)
 
 import aiohttp
 from aiohttp            import web
@@ -32,6 +33,7 @@ def oauth_error_response(func):
             return web.json_response(data = data, status = self.status)
     return wrapper
 
+System = namedtuple('System', ['parameters', 'notifications'])
 
 class Uplink:
     def __init__(self, loop):
@@ -41,12 +43,14 @@ class Uplink:
             web.post('/oauth/token', self.on_oauth_token),
             web.post('/oauth/authorize', self.on_oauth_authorize),
             web.get('/api/v1/systems/{systemId}/notifications', self.on_notifications),
+            web.get('/api/v1/systems/{systemId}/parameters', self.on_parameters),
         ])
         self.handler  = None
         self.server   = None
         self.base     = None
         self.redirect = None
         self.systems  = {}
+        self.requests = defaultdict(int)
 
 
     async def start(self):
@@ -107,75 +111,35 @@ class Uplink:
 
         return aiohttp.web.HTTPFound(urlunsplit(url))
 
+    def add_system(self, systemid):
+        self.systems[systemid] = System({}, {})
+
     def add_parameter(self, systemid, parameter):
-        self.systems[systemid] = {}
+        self.systems[systemid].parameters[parameter['parameterId']] = parameter
+
+    def add_notification(self, systemid, notification):
+        self.systems[systemid].notifications[notification['notificationId']] = notification
 
     async def on_notifications(self, request):
-        systemId = request.match_info['systemId']
+        self.requests['on_notifications'] = self.requests['on_notifications'] + 1
+
+        systemid = int(request.match_info['systemId'])
+        notifications = self.systems[systemid].notifications
+
         return web.json_response(
             {
               "page": 1,
               "itemsPerPage": 2,
-              "numItems": 1,
-              "objects": [
-                  {
-                    "notificationId": 1,
-                    "systemUnitId": 3,
-                    "moduleName": "sample string 4",
-                    "occuredAt": "2017-12-26T10:38:06Z",
-                    "stoppedAt": "2017-12-26T10:38:06Z",
-                    "wasReset": True,
-                    "resetPossible": True,
-                    "aidmodePossible": True,
-                    "info": {
-                      "alarmNumber": 1,
-                      "type": "ALARM",
-                      "title": "sample string 2",
-                      "description": "sample string 3"
-                    },
-                    "comments": [
-                      {
-                        "authorName": "sample string 1",
-                        "authorAvatar": {
-                          "name": None,
-                          "sizes": [
-                            {
-                              "width": 35,
-                              "height": 35,
-                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
-                            },
-                            {
-                              "width": 50,
-                              "height": 50,
-                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
-                            }
-                          ]
-                        },
-                        "creationDate": "2017-12-26T10:38:06Z",
-                        "text": "sample string 3"
-                      },
-                      {
-                        "authorName": "sample string 1",
-                        "authorAvatar": {
-                          "name": None,
-                          "sizes": [
-                            {
-                              "width": 35,
-                              "height": 35,
-                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=35&d=mm"
-                            },
-                            {
-                              "width": 50,
-                              "height": 50,
-                              "url": "https://secure.gravatar.com/avatar/8f1b5a0edd19674db68799f1e7aed3e4?s=50&d=mm"
-                            }
-                          ]
-                        },
-                        "creationDate": "2017-12-26T10:38:06Z",
-                        "text": "sample string 3"
-                      }
-                    ]
-                  },
-                ]
+              "numItems": len(notifications),
+              "objects": list(notifications.values())
               }
           )
+
+    async def on_parameters(self, request):
+        self.requests['on_parameters'] = self.requests['on_parameters'] + 1
+
+        systemid    = int(request.match_info['systemId'])
+        parameters  = request.query.getall('parameterIds')
+        return web.json_response(
+                [self.systems[systemid].parameters[int(p)] for p in parameters]
+            )
