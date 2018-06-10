@@ -19,5 +19,6 @@ setup(
     ],
     entry_points = {
         'console_scripts' : ['nibeuplink=nibeuplink.console:main']
-    }
+    },
+    url='https://github.com/elupus/nibeuplink',    
 )
