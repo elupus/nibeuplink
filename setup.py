@@ -5,7 +5,8 @@ setup(
     version='0.3.1',
     description='A python wrapper around Nibe Uplink REST API',
     license='MIT',
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages('src'),
+    package_dir = {'': 'src'},
     python_requires='>3.5',
     install_requires=[
         'asyncio',
