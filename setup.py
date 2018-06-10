@@ -8,6 +8,7 @@ setup(
     packages=find_packages('src'),
     package_dir = {'': 'src'},
     python_requires='>3.5',
+    author='Joakim Plate',
     install_requires=[
         'asyncio',
         'aiohttp',
@@ -20,5 +21,12 @@ setup(
     entry_points = {
         'console_scripts' : ['nibeuplink=nibeuplink.console:main']
     },
-    url='https://github.com/elupus/nibeuplink',    
+    url='https://github.com/elupus/nibeuplink',
+    classifiers=[
+        'License :: OSI Approved :: MIT License',
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Environment :: Plugins',
+        'Framework :: AsyncIO',
+    ]
 )
