@@ -54,6 +54,10 @@ class Uplink:
         self.requests = defaultdict(int)
         self.tokens   = {}
 
+    def requests_update(self, fun):
+        _LOGGER.debug(fun)
+        self.requests[fun] = self.requests[fun] + 1
+
     async def start(self):
         print("Starting fake uplink")
         port = unused_port()
@@ -78,7 +82,7 @@ class Uplink:
 
     @oauth_error_response
     async def on_oauth_token(self, request):
-        self.requests['on_oauth_token'] = self.requests['on_oauth_token'] + 1
+        self.requests_update('on_oauth_token')
         data = await request.post()
         if data['grant_type'] == 'authorization_code':
             self.tokens['dummyaccesstoken'] = True
@@ -110,6 +114,8 @@ class Uplink:
     
     @oauth_error_response
     async def on_oauth_authorize(self, request):
+        self.requests_update('on_oauth_authorize')
+
         data = await request.post()
         query = request.query
         _LOGGER.info(query)
@@ -152,8 +158,9 @@ class Uplink:
             raise HTTPUnauthorized()
 
     async def on_notifications(self, request):
+        self.requests_update('on_notifications')
+
         await self.check_auth(request)
-        self.requests['on_notifications'] = self.requests['on_notifications'] + 1
 
         systemid = int(request.match_info['systemId'])
         notifications = self.systems[systemid].notifications
@@ -168,8 +175,9 @@ class Uplink:
           )
 
     async def on_parameters(self, request):
+        self.requests_update('on_parameters')
+
         await self.check_auth(request)
-        self.requests['on_parameters'] = self.requests['on_parameters'] + 1
 
         systemid    = int(request.match_info['systemId'])
         parameters  = request.query.getall('parameterIds')
