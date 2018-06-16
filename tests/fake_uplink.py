@@ -53,6 +53,11 @@ class Uplink:
         self.systems  = {}
         self.requests = defaultdict(int)
         self.tokens   = {}
+        self.counter  = 0
+
+    def get_counted(self, prefix):
+        self.counter = self.counter + 1
+        return '{}_{}'.format(prefix, self.counter)
 
     def requests_update(self, fun):
         _LOGGER.debug(fun)
@@ -79,15 +84,15 @@ class Uplink:
 
 
 
-
     @oauth_error_response
     async def on_oauth_token(self, request):
         self.requests_update('on_oauth_token')
         data = await request.post()
         if data['grant_type'] == 'authorization_code':
-            self.tokens['dummyaccesstoken'] = True
+            token = self.get_counted('dummyaccesstoken')
+            self.tokens[token] = True
             data = {
-                'access_token' : 'dummyaccesstoken',
+                'access_token' : token,
                 'expires_in'   : 300,
                 'refresh_token': 'dummyrefreshtoken',
                 'scopes'       : 'READSYSTEM',
@@ -97,10 +102,11 @@ class Uplink:
 
         elif data['grant_type'] == 'refresh_token':
             if data['refresh_token'] == 'dummyrefreshtoken':
-                self.tokens['dummyaccesstoken'] = True
+                token = self.get_counted('dummyaccesstoken')
+                self.tokens[token] = True
 
                 data = {
-                    'access_token' : 'dummyaccesstoken',
+                    'access_token' : token,
                     'expires_in'   : 300,
                     'refresh_token': 'dummyrefreshtoken',
                     'scopes'       : 'READSYSTEM',
