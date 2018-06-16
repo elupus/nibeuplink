@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='nibeuplink',
-    version='0.3.1',
+    version='0.3.2',
     description='A python wrapper around Nibe Uplink REST API',
     license='MIT',
     packages=find_packages('src'),
