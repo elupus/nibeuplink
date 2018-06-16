@@ -182,19 +182,18 @@ class Uplink():
                 '{}/api/v1/{}'.format(self.base, url),
                 params = params,
                 headers= {},
-                auth   = self.auth
             )
 
     async def _request(self, fun, *args, **kw):
 
-        response = await fun(*args, **kw)
+        response = await fun(*args, auth = self.auth, **kw)
         try:
             if response.status == 401:
                 _LOGGER.debug(response)
                 _LOGGER.info("Attempting to refresh token due to error in request")
                 await self.refresh_access_token()
                 response.close()
-                response = await fun(*args, **kw)
+                response = await fun(*args, auth = self.auth, **kw)
 
             if 'json' in response.headers.get('CONTENT-TYPE'):
                 data = await response.json()
@@ -248,7 +247,6 @@ class Uplink():
                     '{}/api/v1/systems/{}/parameters'.format(self.base, system_id),
                     params  = [('parameterIds', str(x.parameter_id)) for x in requests],
                     headers = {},
-                    auth    = self.auth
                 )
 
 
@@ -298,7 +296,6 @@ class Uplink():
             '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id),
             json    = data,
             headers = headers,
-            auth    = self.auth
         )
 
     async def get_system(self, system_id):
