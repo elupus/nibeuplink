@@ -269,6 +269,8 @@ class Uplink():
                     pass
 
                 data['value'] = value
+            elif data['displayValue'] == '--':
+                data['value'] = None
             else:
                 data['value'] = data['displayValue']
 
