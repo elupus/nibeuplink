@@ -249,8 +249,7 @@ class Uplink():
                     headers = {},
                 )
 
-
-                lookup = { p['parameterId']: p for p in data }
+                lookup = { p['name']: p for p in data }
 
                 for r in requests:
                     if r.parameter_id in lookup:
