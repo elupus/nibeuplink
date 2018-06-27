@@ -210,7 +210,7 @@ class Uplink():
         finally:
             response.close()
 
-    async def get_parameter_raw(self, system_id, parameter_id):
+    async def get_parameter_raw(self, system_id: int, parameter_id: str):
 
         request = ParameterRequest(parameter_id)
         if system_id not in self.requests:
@@ -275,12 +275,12 @@ class Uplink():
 
 
 
-    async def get_parameter(self, system_id, parameter_id):
+    async def get_parameter(self, system_id: int, parameter_id: str):
         data = await self.get_parameter_raw(system_id, parameter_id)
         self.add_parameter_extensions(data)
         return data
 
-    async def set_parameter(self, system_id, parameter_id, value):
+    async def set_parameter(self, system_id: int, parameter_id: str, value):
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
@@ -299,7 +299,7 @@ class Uplink():
             headers = headers,
         )
 
-    async def get_system(self, system_id):
+    async def get_system(self, system_id: int):
         _LOGGER.debug("Requesting system {}".format(system_id))
         return await self.get('systems/{}'.format(system_id))
 
@@ -308,42 +308,44 @@ class Uplink():
         data = await self.get('systems')
         return data['objects']
 
-    async def get_category_raw(self, system_id, category_id):
+    async def get_category_raw(self, system_id: int, category_id: str, unit_id: int = 0):
         _LOGGER.debug("Requesting category {} on system {}".format(category_id, system_id))
-        return await self.get('systems/{}/serviceinfo/categories/{}'.format(system_id, category_id))
+        return await self.get('systems/{}/serviceinfo/categories/{}'.format(system_id, category_id),
+                              {'systemUnitId': unit_id})
 
-    async def get_category(self, system_id, category_id):
-        data = await self.get_category_raw(system_id, category_id)
+    async def get_category(self, system_id: int, category_id: str, unit_id: int = 0):
+        data = await self.get_category_raw(system_id, category_id, unit_id)
         for param in data:
             self.add_parameter_extensions(param)
         return data
 
-    async def get_categories(self, system_id, parameters):
+    async def get_categories(self, system_id: int, parameters: bool, unit_id: int = 0):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
         return await self.get('systems/{}/serviceinfo/categories'.format(system_id),
-                                {'parameters' : str(parameters)})
+                                {'parameters'  : str(parameters),
+                                 'systemUnitId': unit_id})
 
-    async def get_status_raw(self, system_id):
+    async def get_status_raw(self, system_id: int):
         _LOGGER.debug("Requesting status on system {}".format(system_id))
         return await self.get('systems/{}/status/system'.format(system_id))
 
-    async def get_status(self, system_id):
+    async def get_status(self, system_id: int):
         data = await self.get_status_raw(system_id)
         for status in data:
             for param in status['parameters']:
                 self.add_parameter_extensions(param)
         return data
 
-    async def get_units(self, system_id):
+    async def get_units(self, system_id: int):
         _LOGGER.debug("Requesting units on system {}".format(system_id))
         return await self.get('systems/{}/units'.format(system_id))
 
-    async def get_unit_status(self, system_id, unit_id):
+    async def get_unit_status(self, system_id: int, unit_id: int):
         _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
         return await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
 
-    async def get_notifications(self, system_id, active = True, notifiction_type = 'ALARM'):
+    async def get_notifications(self, system_id: int, active: bool = True, notifiction_type: str = 'ALARM'):
         _LOGGER.debug("Requesting notifications on system {}".format(system_id))
         params = { 'active'      : str(active),
                    'itemsPerPage': 100,

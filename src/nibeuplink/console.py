@@ -26,7 +26,8 @@ parser.add_argument('--parameter', nargs='+', type=str)
 parser.add_argument('--setparameter', nargs='+', type=pair)
 parser.add_argument('--units', action='store_true')
 parser.add_argument('--notifications', action='store_true')
-parser.add_argument('--unit', nargs='+', type=int)
+parser.add_argument('--unit', type=int, default=0)
+parser.add_argument('--unit_status', action='store_true')
 parser.add_argument('--verbose', action='store_true')
 
 args = parser.parse_args()
@@ -89,19 +90,19 @@ async def run():
                 todo.extend([uplink.get_parameter(args.system, p) for p in args.parameter])
 
             if args.categories:
-                todo.extend([uplink.get_categories(args.system, False)])
+                todo.extend([uplink.get_categories(args.system, False, args.unit)])
 
             if args.category:
-                todo.extend([uplink.get_category(args.system, p) for p in args.category])
+                todo.extend([uplink.get_category(args.system, p, args.unit) for p in args.category])
 
             if args.status:
                 todo.extend([uplink.get_status(args.system)])
 
+            if args.unit_status:
+                todo.extend([uplink.get_unit_status(args.system, args.unit)])
+
             if args.units:
                 todo.extend([uplink.get_units(args.system)])
-
-            if args.unit:
-                todo.extend([uplink.get_unit_status(args.system, p) for p in args.unit])
 
             if args.notifications:
                 todo.extend([uplink.get_notifications(args.system)])
