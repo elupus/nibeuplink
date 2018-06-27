@@ -212,7 +212,7 @@ class Uplink():
 
     async def get_parameter_raw(self, system_id: int, parameter_id: str):
 
-        request = ParameterRequest(parameter_id)
+        request = ParameterRequest(str(parameter_id))
         if system_id not in self.requests:
             self.requests[system_id] = []
         self.requests[system_id].append(request)
