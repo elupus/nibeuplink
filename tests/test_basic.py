@@ -6,6 +6,7 @@ import socket
 import aiohttp
 from   aiohttp import web
 import fake_uplink
+from datetime import timedelta
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -34,6 +35,9 @@ async def default_uplink(event_loop):
                            access_write,
                            scope = DEFAULT_SCOPE,
                            base  = server.base) as uplink:
+
+        # Override the default throttling to 0 to speed up tests
+        uplink.THROTTLE = timedelta(seconds = 0)
         yield uplink, server
 
     await server.stop()
