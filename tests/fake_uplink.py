@@ -146,7 +146,7 @@ class Uplink:
         self.systems[systemid] = System({}, {})
 
     def add_parameter(self, systemid, parameter):
-        self.systems[systemid].parameters[parameter['parameterId']] = parameter
+        self.systems[systemid].parameters[parameter['name']] = parameter
 
     def add_notification(self, systemid, notification):
         self.systems[systemid].notifications[notification['notificationId']] = notification
@@ -188,5 +188,5 @@ class Uplink:
         systemid    = int(request.match_info['systemId'])
         parameters  = request.query.getall('parameterIds')
         return web.json_response(
-                [self.systems[systemid].parameters[int(p)] for p in parameters]
+                [self.systems[systemid].parameters[str(p)] for p in parameters]
             )
