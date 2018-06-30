@@ -44,7 +44,8 @@ class Uplink:
             web.post('/oauth/token', self.on_oauth_token),
             web.post('/oauth/authorize', self.on_oauth_authorize),
             web.get('/api/v1/systems/{systemId}/notifications', self.on_notifications),
-            web.get('/api/v1/systems/{systemId}/parameters', self.on_parameters),
+            web.get('/api/v1/systems/{systemId}/parameters', self.on_get_parameters),
+            web.put('/api/v1/systems/{systemId}/parameters', self.on_put_parameters),
         ])
         self.handler  = None
         self.server   = None
@@ -180,8 +181,8 @@ class Uplink:
               }
           )
 
-    async def on_parameters(self, request):
-        self.requests_update('on_parameters')
+    async def on_get_parameters(self, request):
+        self.requests_update('on_get_parameters')
 
         await self.check_auth(request)
 
@@ -190,3 +191,20 @@ class Uplink:
         return web.json_response(
                 [self.systems[systemid].parameters[str(p)] for p in parameters]
             )
+
+    async def on_put_parameters(self, request):
+        self.requests_update('on_put_parameters')
+
+        await self.check_auth(request)
+
+        systemid = int(request.match_info['systemId'])
+        data = await request.json()
+        response = []
+
+        for key, value in data['settings'].items():
+            response.append({
+                'status'   : 'DONE',
+                'parameter': self.systems[systemid].parameters[str(key)]
+            })
+
+        return web.json_response(response)

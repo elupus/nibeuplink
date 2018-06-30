@@ -214,7 +214,7 @@ async def test_token_refresh(uplink_with_data):
 
 
 @pytest.mark.asyncio
-async def test_single_parameter(uplink_with_data):
+async def test_get_parameter(uplink_with_data):
     uplink = uplink_with_data[0]
     server = uplink_with_data[1]
 
@@ -229,6 +229,17 @@ async def test_single_parameter(uplink_with_data):
     parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 'onehundredtwenty')
 
     assert parameter['displayValue'] == '120 Units'
+
+@pytest.mark.asyncio
+async def test_put_parameter(uplink_with_data):
+    uplink = uplink_with_data[0]
+    server = uplink_with_data[1]
+
+    status = await uplink.put_parameter(DEFAULT_SYSTEMID, 100, 'hello')
+
+    assert status == 'DONE'
+
+
 
 @pytest.mark.asyncio
 async def test_parameters_unit(uplink_with_data):
@@ -281,4 +292,4 @@ async def test_parameters(default_uplink, count):
         assert parameters[index]['displayValue'] == data[index]['displayValue']
 
     # Check that we don't issue more requests than we need
-    assert server.requests['on_parameters'] == int((len(parameterids) + 14) / 15)
+    assert server.requests['on_get_parameters'] == int((len(parameterids) + 14) / 15)
