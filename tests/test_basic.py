@@ -55,6 +55,26 @@ async def uplink_with_data(default_uplink):
             'rawValue': 100
         })
 
+    default_uplink[1].add_parameter(DEFAULT_SYSTEMID, {
+            'parameterId' : 120,
+            'displayValue': '120 Units',
+            'name' : 'onehundredtwenty',
+            'title': 'One Hundred Twenty',
+            'unit': 'Units',
+            'designation': 'Designation',
+            'rawValue': 250
+        })
+
+    default_uplink[1].add_parameter(DEFAULT_SYSTEMID, {
+            'parameterId' : 120,
+            'displayValue': '120 Units',
+            'name' : '120',
+            'title': 'One Hundred Twenty',
+            'unit': 'Units',
+            'designation': 'Designation',
+            'rawValue': 250
+        })
+
     # Make sure we have a token
     await default_uplink[0].get_access_token(DEFAULT_CODE)
 
@@ -201,6 +221,14 @@ async def test_single_parameter(uplink_with_data):
     parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
 
     assert parameter['displayValue'] == '100 Unit'
+
+    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 120)
+
+    assert parameter['displayValue'] == '120 Units'
+
+    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 'onehundredtwenty')
+
+    assert parameter['displayValue'] == '120 Units'
 
 @pytest.mark.asyncio
 async def test_parameters_unit(uplink_with_data):
