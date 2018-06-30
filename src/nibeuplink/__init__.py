@@ -280,7 +280,7 @@ class Uplink():
         self.add_parameter_extensions(data)
         return data
 
-    async def set_parameter(self, system_id: int, parameter_id: str, value):
+    async def put_parameter(self, system_id: int, parameter_id: str, value):
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
