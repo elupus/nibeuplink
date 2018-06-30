@@ -18,7 +18,7 @@ setup(
             'pytest',
             'pytest-asyncio',
             'pytest-aiohttp',
-
+            'pytest-cov',
         ]
     },
     entry_points = {

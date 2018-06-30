@@ -4,4 +4,6 @@ python:
 
 cache: pip
 install: pip install -e .[tests]
-script: pytest
+script: pytest --cov src
+after_success:
+  - coveralls
