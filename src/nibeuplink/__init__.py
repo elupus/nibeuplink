@@ -1,24 +1,23 @@
 import logging
-import sys
-import os
 from itertools import islice
 import asyncio
 import aiohttp
 import uuid
-import multidict
 from datetime import datetime, timedelta
 
-from urllib.parse import urlencode, urljoin, urlsplit, parse_qs, parse_qsl
+from urllib.parse import urlencode, urlsplit, parse_qs
 
 
 _LOGGER = logging.getLogger(__name__)
 
-MAX_REQUEST_PARAMETERS   = 15
+MAX_REQUEST_PARAMETERS = 15
+
 
 def chunks(data, SIZE):
     it = iter(data)
     for i in range(0, len(data), SIZE):
         yield {k:data[k] for k in islice(it, SIZE)}
+
 
 def chunk_pop(data, SIZE):
     count = len(data)
@@ -39,12 +38,14 @@ async def raise_for_status(response):
             message=await response.text(),
             headers=response.headers)
 
+
 class BearerAuth(aiohttp.BasicAuth):
     def __init__(self, access_token):
         self.access_token = access_token
 
     def encode(self):
         return "Bearer {}".format(self.access_token)
+
 
 class ParameterRequest:
     def __init__(self, parameter_id: str):
@@ -91,8 +92,8 @@ class Uplink():
             self.auth = None
 
         headers = {
-                'Accept'      : 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            'Accept'      : 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
         }
 
         self.session           = aiohttp.ClientSession(headers   = headers,
@@ -132,7 +133,6 @@ class Uplink():
             await raise_for_status(response)
             self._handle_access_token(await response.json())
 
-
     async def refresh_access_token(self):
         payload = {
             'grant_type'    : 'refresh_token',
@@ -163,9 +163,8 @@ class Uplink():
             raise ValueError('Invalid state in url {} expected {}'.format(query['state'], self.state))
         return query['code'][0]
 
-
-    # Throttle requests to API to once every MIN_REQUEST_DELAY
     async def _get_throttle(self):
+        """ Throttle requests to API to once every MIN_REQUEST_DELAY """
         timestamp = datetime.now()
 
         delay = (self.timestamp - timestamp).total_seconds()
@@ -193,7 +192,7 @@ class Uplink():
                 _LOGGER.info("Attempting to refresh token due to error in request")
                 await self.refresh_access_token()
                 response.close()
-                response = await fun(*args, auth = self.auth, **kw)
+                response = await fun(*args, auth=self.auth, **kw)
 
             if 'json' in response.headers.get('CONTENT-TYPE'):
                 data = await response.json()
@@ -230,12 +229,13 @@ class Uplink():
                 if len(self.requests[system_id]) == 0:
                     break
 
-                # Throttle requests to API, during this new requests can be added
+                # Throttle requests to API, during this
+                # new requests can be added
                 await self._get_throttle()
 
-
                 # chop of as many requests from start as possible
-                requests = chunk_pop(self.requests[system_id], MAX_REQUEST_PARAMETERS)
+                requests = chunk_pop(self.requests[system_id],
+                                     MAX_REQUEST_PARAMETERS)
 
                 _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
 
@@ -246,7 +246,7 @@ class Uplink():
                     headers = {},
                 )
 
-                lookup = { p['name']: p for p in data }
+                lookup = {p['name']: p for p in data}
 
                 for r in requests:
                     r.done = True
@@ -270,8 +270,6 @@ class Uplink():
                 data['value'] = None
             else:
                 data['value'] = data['displayValue']
-
-
 
     async def get_parameter(self, system_id: int, parameter_id: str):
         data = await self.get_parameter_raw(system_id, parameter_id)
@@ -307,18 +305,27 @@ class Uplink():
         data = await self.get('systems')
         return data['objects']
 
-    async def get_category_raw(self, system_id: int, category_id: str, unit_id: int = 0):
+    async def get_category_raw(self,
+                               system_id: int,
+                               category_id: str,
+                               unit_id: int = 0):
         _LOGGER.debug("Requesting category {} on system {}".format(category_id, system_id))
         return await self.get('systems/{}/serviceinfo/categories/{}'.format(system_id, category_id),
                               {'systemUnitId': unit_id})
 
-    async def get_category(self, system_id: int, category_id: str, unit_id: int = 0):
+    async def get_category(self,
+                           system_id: int,
+                           category_id: str,
+                           unit_id: int = 0):
         data = await self.get_category_raw(system_id, category_id, unit_id)
         for param in data:
             self.add_parameter_extensions(param)
         return data
 
-    async def get_categories(self, system_id: int, parameters: bool, unit_id: int = 0):
+    async def get_categories(self,
+                             system_id: int,
+                             parameters: bool,
+                             unit_id: int = 0):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
         return await self.get('systems/{}/serviceinfo/categories'.format(system_id),
@@ -344,11 +351,15 @@ class Uplink():
         _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
         return await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
 
-    async def get_notifications(self, system_id: int, active: bool = True, notifiction_type: str = 'ALARM'):
+    async def get_notifications(self,
+                                system_id: int,
+                                active: bool = True,
+                                notifiction_type: str = 'ALARM'):
         _LOGGER.debug("Requesting notifications on system {}".format(system_id))
-        params = { 'active'      : str(active),
-                   'itemsPerPage': 100,
-                   'type'        : notifiction_type,
+        params = {
+            'active'      : str(active),
+            'itemsPerPage': 100,
+            'type'        : notifiction_type,
         }
-        data = await self.get('systems/{}/notifications'.format(system_id), params = params)
+        data = await self.get('systems/{}/notifications'.format(system_id), params=params)
         return data['objects']

@@ -1,18 +1,15 @@
 import logging
-import asyncio
-import socket
-import ssl
 from functools import wraps
-from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit, parse_qs, parse_qsl
+from urllib.parse import urlencode, urlsplit, urlunsplit
 from collections import (defaultdict, namedtuple)
 
 import aiohttp
-from aiohttp            import web
+from aiohttp import web
 from aiohttp.web_exceptions import HTTPUnauthorized
-from aiohttp.resolver   import DefaultResolver
 from aiohttp.test_utils import unused_port
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class JsonError(Exception):
     def __init__(self, status, error, description):
@@ -21,6 +18,7 @@ class JsonError(Exception):
         self.description = description
         super.__init__("{}: {}".format(error, description))
 
+
 def oauth_error_response(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -28,13 +26,15 @@ def oauth_error_response(func):
             return func(*args, **kwargs)
         except JsonError as e:
             data = {
-                'error'            : self.error,
-                'error_description': self.description
+                'error'            : e.error,
+                'error_description': e.description
             }
-            return web.json_response(data = data, status = self.status)
+            return web.json_response(data = data, status = e.status)
     return wrapper
 
+
 System = namedtuple('System', ['parameters', 'notifications'])
+
 
 class Uplink:
     def __init__(self, loop):
@@ -71,8 +71,8 @@ class Uplink:
 
         self.handler  = self.app.make_handler()
         self.server   = await self.loop.create_server(self.handler,
-                                                     host,
-                                                     port)
+                                                      host,
+                                                      port)
         self.base     = 'http://{}:{}'.format(host, port)
         self.redirect = '{}/redirect'.format(self.base)
 
@@ -82,8 +82,6 @@ class Uplink:
         await self.server.wait_closed()
         await self.app.shutdown()
         await self.handler.shutdown()
-
-
 
     @oauth_error_response
     async def on_oauth_token(self, request):
@@ -118,12 +116,12 @@ class Uplink:
                 raise Exception("unexpected refresh token")
         else:
             raise JsonError(400, "invalid_request", 'unknown grant_type: {}'.format(data['grant_type']))
-    
+
     @oauth_error_response
     async def on_oauth_authorize(self, request):
         self.requests_update('on_oauth_authorize')
 
-        data = await request.post()
+        await request.post()
         query = request.query
         _LOGGER.info(query)
         assert 'redirect_uri'  in query
@@ -172,14 +170,12 @@ class Uplink:
         systemid = int(request.match_info['systemId'])
         notifications = self.systems[systemid].notifications
 
-        return web.json_response(
-            {
-              "page": 1,
-              "itemsPerPage": 2,
-              "numItems": len(notifications),
-              "objects": list(notifications.values())
-              }
-          )
+        return web.json_response({
+            "page": 1,
+            "itemsPerPage": 2,
+            "numItems": len(notifications),
+            "objects": list(notifications.values())
+        })
 
     async def on_get_parameters(self, request):
         self.requests_update('on_get_parameters')
@@ -189,8 +185,8 @@ class Uplink:
         systemid    = int(request.match_info['systemId'])
         parameters  = request.query.getall('parameterIds')
         return web.json_response(
-                [self.systems[systemid].parameters[str(p)] for p in parameters]
-            )
+            [self.systems[systemid].parameters[str(p)] for p in parameters]
+        )
 
     async def on_put_parameters(self, request):
         self.requests_update('on_put_parameters')
