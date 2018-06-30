@@ -237,9 +237,6 @@ class Uplink():
                 # chop of as many requests from start as possible
                 requests = chunk_pop(self.requests[system_id], MAX_REQUEST_PARAMETERS)
 
-                for r in requests:
-                    r.done = True
-
                 _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
 
                 data = await self._request(
@@ -252,6 +249,7 @@ class Uplink():
                 lookup = { p['name']: p for p in data }
 
                 for r in requests:
+                    r.done = True
                     if r.parameter_id in lookup:
                         r.data = lookup[r.parameter_id]
 
