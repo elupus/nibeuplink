@@ -294,7 +294,7 @@ class Uplink():
 
         return await self._request(
             self.session.put,
-            '{}/api/v1/systems/{}/parameters'.format(BASE_URL, system_id),
+            '{}/api/v1/systems/{}/parameters'.format(self.base, system_id),
             json    = data,
             headers = headers,
         )
