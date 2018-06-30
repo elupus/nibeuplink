@@ -10,6 +10,14 @@ Module
 The module is an asyncio driven interface to nibe uplink public API. It is throttled to one http request every 4 seconds so
 try to make the most of your requests by batching requests.
 
+Status
+______
+.. image:: https://travis-ci.org/elupus/nibeuplink.svg?branch=master
+    :target: https://travis-ci.org/elupus/nibeuplink
+
+.. image:: https://coveralls.io/repos/github/elupus/nibeuplink/badge.svg?branch=master
+    :target: https://coveralls.io/github/elupus/nibeuplink?branch=master
+
 
 Example
 _______
