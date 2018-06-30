@@ -13,11 +13,14 @@ setup(
         'asyncio',
         'aiohttp',
     ],
-    tests_require=[
-        'pytest',
-        'pytest-asyncio',
-        'pytest-aiohttp',
-    ],
+    extras_require={
+        'tests': [
+            'pytest',
+            'pytest-asyncio',
+            'pytest-aiohttp',
+
+        ]
+    },
     entry_points = {
         'console_scripts' : ['nibeuplink=nibeuplink.console:main']
     },
