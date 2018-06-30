@@ -48,7 +48,7 @@ async def uplink_with_data(default_uplink):
     default_uplink[1].add_parameter(DEFAULT_SYSTEMID, {
             'parameterId' : 100,
             'displayValue': '100 Unit',
-            'name' : 'Parameter Name',
+            'name' : '100',
             'title': 'Paramter Title',
             'unit': 'Unit',
             'designation': 'Designation',
@@ -228,7 +228,7 @@ async def test_parameters(default_uplink, count):
         {
             'parameterId' : index,
             'displayValue': '{}'.format(index),
-            'name' : 'Parameter Name',
+            'name' : str(index),
             'title': 'Paramter Title',
             'unit': 'Unit',
             'designation': 'Designation',

@@ -47,7 +47,7 @@ class BearerAuth(aiohttp.BasicAuth):
         return "Bearer {}".format(self.access_token)
 
 class ParameterRequest:
-    def __init__(self, parameter_id):
+    def __init__(self, parameter_id: str):
         self.parameter_id = parameter_id
         self.data         = None
         self.done         = False
