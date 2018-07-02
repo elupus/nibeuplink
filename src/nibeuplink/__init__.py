@@ -51,7 +51,7 @@ PARAM_PUMP_SPEED = 43437
 def chunks(data, SIZE):
     it = iter(data)
     for i in range(0, len(data), SIZE):
-        yield {k:data[k] for k in islice(it, SIZE)}
+        yield {k: data[k] for k in islice(it, SIZE)}
 
 
 def chunk_pop(data, SIZE):
