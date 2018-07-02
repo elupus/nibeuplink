@@ -363,9 +363,14 @@ class Uplink():
                              unit_id: int = 0):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
-        return await self.get('systems/{}/serviceinfo/categories'.format(system_id),
-                                {'parameters'  : str(parameters),
-                                 'systemUnitId': unit_id})
+        data = await self.get('systems/{}/serviceinfo/categories'.format(system_id),
+                              {'parameters'  : str(parameters),
+                               'systemUnitId': unit_id})
+        for category in data:
+            if category['parameters']:
+                for param in category['parameters']:
+                    self.add_parameter_extensions(param)
+        return data
 
     async def get_status_raw(self, system_id: int):
         _LOGGER.debug("Requesting status on system {}".format(system_id))
@@ -374,8 +379,9 @@ class Uplink():
     async def get_status(self, system_id: int):
         data = await self.get_status_raw(system_id)
         for status in data:
-            for param in status['parameters']:
-                self.add_parameter_extensions(param)
+            if status['parameters']:
+                for param in status['parameters']:
+                    self.add_parameter_extensions(param)
         return data
 
     async def get_units(self, system_id: int):
@@ -384,7 +390,12 @@ class Uplink():
 
     async def get_unit_status(self, system_id: int, unit_id: int):
         _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
-        return await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
+        data = await self.get('systems/{}/status/systemUnit/{}'.format(system_id, unit_id))
+        for status in data:
+            if status['parameters']:
+                for param in status['parameters']:
+                    self.add_parameter_extensions(param)
+        return data
 
     async def get_notifications(self,
                                 system_id: int,
