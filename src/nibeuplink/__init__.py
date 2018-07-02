@@ -3,6 +3,7 @@ from itertools import islice
 import asyncio
 import aiohttp
 import uuid
+from collections import namedtuple
 from datetime import datetime, timedelta
 
 from urllib.parse import urlencode, urlsplit, parse_qs
@@ -11,6 +12,40 @@ from urllib.parse import urlencode, urlsplit, parse_qs
 _LOGGER = logging.getLogger(__name__)
 
 MAX_REQUEST_PARAMETERS = 15
+
+
+ClimateSystem = namedtuple(
+    'ClimateSystem',
+    [
+        'name',
+        'return_temp',                 # BT3
+        'supply_temp',                 # BT2
+        'calc_supply_temp_heat',       # CSTH
+        'offset_cool',                 # OC
+        'room_temp',                   # BT50
+        'room_setpoint_heat',          # RSH
+        'room_setpoint_cool',          # RSC
+        'use_room_sensor',             # URS
+        'active_accessory',            # AA
+        'external_adjustment_active',  # EAA
+        'calc_supply_temp_cool',       # CSTC
+        'offset_heat',                 # OH
+        'heat_curve',                  # HC
+        'min_supply',                  # MIS
+        'max_supply',                  # MAS
+        'extra_heat_pump'              # EHP
+    ]
+)
+
+PARAM_CLIMATE_SYSTEMS = {
+    #                        BT3    BT2    CSTH   OC     BT50   RSH    RSC    URS    AA     EAA    CSTC   OH     HC     MIS    MAS    HP
+    '1': ClimateSystem('S1', 40012, 40008, 43009, 48739, 40033, 47398, 48785, 47394, None , 43161, 44270, 47011, 47007, 47015, 47016, None),
+    '2': ClimateSystem('S2', 40129, 40007, 43008, 48738, 40032, 47397, 48784, 47393, 47302, 43160, 44269, 47010, 47006, 47014, 47017, 44746),
+    '3': ClimateSystem('S3', 40128, 40006, 43007, 48737, 40031, 47396, 48783, 47392, 47303, 43159, 44268, 47009, 47005, 47013, 47018, 44745),
+    '4': ClimateSystem('S4', 40127, 40005, 43006, 48736, 40030, 47395, 48782, 47391, 47304, 43158, 44267, 47008, 47004, 47012, 47019, 44744),
+}
+
+PARAM_PUMP_SPEED = 43437
 
 
 def chunks(data, SIZE):
