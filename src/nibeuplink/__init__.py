@@ -229,15 +229,12 @@ class Uplink():
                 response.close()
                 response = await fun(*args, auth=self.auth, **kw)
 
-            if 'json' in response.headers.get('CONTENT-TYPE'):
+            await raise_for_status(response)
+
+            if 'json' in response.headers.get('CONTENT-TYPE', ''):
                 data = await response.json()
             else:
                 data = await response.text()
-
-            if response.status >= 400:
-                _LOGGER.debug(data)
-
-            await raise_for_status(response)
 
             return data
 
