@@ -133,9 +133,9 @@ class Uplink():
                  redirect_uri,
                  access_data,
                  access_data_write,
-                 scope     = ['READSYSTEM'],
-                 loop      = None,
-                 base      = 'https://api.nibeuplink.com'):
+                 scope = ['READSYSTEM'],
+                 loop = None,
+                 base = 'https://api.nibeuplink.com'):
 
         self.redirect_uri      = redirect_uri
         self.client_id         = client_id
