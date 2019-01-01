@@ -45,6 +45,7 @@ if args.verbose:
 
 STORE = 'nibeuplink.json'
 
+
 def token_read():
     try:
         with open(STORE, 'r') as myfile:
@@ -55,13 +56,15 @@ def token_read():
         _LOGGER.warning('Failed to load previous token: %s' % sys.exc_info()[0])
         return None
 
+
 def token_write(token):
     with open(STORE, 'w') as myfile:
-        json.dump(token, myfile, indent=2)
+        json.dump(token,
+                  myfile,
+                  indent=2)
 
 
 async def run():
-
 
     scope = ['READSYSTEM']
     if args.setparameter:
