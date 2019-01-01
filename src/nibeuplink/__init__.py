@@ -203,6 +203,8 @@ class Uplink():
             self._handle_access_token(await response.json())
 
     async def refresh_access_token(self):
+        _LOGGER.debug('Refreshing access token with refresh token %s',
+                      self.refresh_token)
         payload = {
             'grant_type'    : 'refresh_token',
             'refresh_token' : self.access_data['refresh_token'],
