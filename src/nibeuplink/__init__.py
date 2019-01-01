@@ -1,3 +1,4 @@
+import attr
 import logging
 from itertools import islice
 import asyncio
@@ -14,28 +15,26 @@ _LOGGER = logging.getLogger(__name__)
 MAX_REQUEST_PARAMETERS = 15
 
 
-ClimateSystem = namedtuple(
-    'ClimateSystem',
-    [
-        'name',
-        'return_temp',                 # BT3
-        'supply_temp',                 # BT2
-        'calc_supply_temp_heat',       # CSTH
-        'offset_cool',                 # OC
-        'room_temp',                   # BT50
-        'room_setpoint_heat',          # RSH
-        'room_setpoint_cool',          # RSC
-        'use_room_sensor',             # URS
-        'active_accessory',            # AA
-        'external_adjustment_active',  # EAA
-        'calc_supply_temp_cool',       # CSTC
-        'offset_heat',                 # OH
-        'heat_curve',                  # HC
-        'min_supply',                  # MIS
-        'max_supply',                  # MAS
-        'extra_heat_pump'              # EHP
-    ]
-)
+@attr.s
+class ClimateSystem(object):
+    name = attr.ib()
+    return_temp = attr.ib()                 # BT3
+    supply_temp = attr.ib()                 # BT2
+    calc_supply_temp_heat = attr.ib()       # CSTH
+    offset_cool = attr.ib()                 # OC
+    room_temp = attr.ib()                   # BT50
+    room_setpoint_heat = attr.ib()          # RSH
+    room_setpoint_cool = attr.ib()          # RSC
+    use_room_sensor = attr.ib()             # URS
+    active_accessory = attr.ib()            # AA
+    external_adjustment_active = attr.ib()  # EAA
+    calc_supply_temp_cool = attr.ib()       # CSTC
+    offset_heat = attr.ib()                 # OH
+    heat_curve = attr.ib()                  # HC
+    min_supply = attr.ib()                  # MIS
+    max_supply = attr.ib()                  # MAS
+    extra_heat_pump = attr.ib()              # EHP
+
 
 PARAM_CLIMATE_SYSTEMS = {
     #                        BT3    BT2    CSTH   OC     BT50   RSH    RSC    URS    AA     EAA    CSTC   OH     HC     MIS    MAS    HP
