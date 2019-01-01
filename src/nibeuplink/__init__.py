@@ -36,6 +36,39 @@ class ClimateSystem(object):
     extra_heat_pump = attr.ib()              # EHP
 
 
+@attr.s
+class HotWaterSystem(object):
+    name = attr.ib()
+    hot_water_charging = attr.ib()
+    hot_water_top = attr.ib()
+    hot_water_comfort_mode = attr.ib()
+    hot_water_production = attr.ib()
+    periodic_hot_water = attr.ib()
+    stop_temperature_water_normal = attr.ib()
+    start_temperature_water_normal = attr.ib()
+    stop_temperature_water_luxary = attr.ib()
+    start_temperature_water_luxary = attr.ib()
+    stop_temperature_water_economy = attr.ib()
+    start_temperature_water_economy = attr.ib()
+    total_hot_water_compressor_time = attr.ib()
+
+
+PARAM_HOTWATER_SYSTEMS = {
+    '1': HotWaterSystem('Hot Water',
+                        40014,
+                        40013,
+                        47041,
+                        47387,
+                        47050,
+                        47048,
+                        47044,
+                        47047,
+                        47043,
+                        47049,
+                        47045,
+                        43424)
+}
+
 PARAM_CLIMATE_SYSTEMS = {
     #                        BT3    BT2    CSTH   OC     BT50   RSH    RSC    URS    AA     EAA    CSTC   OH     HC     MIS    MAS    HP
     '1': ClimateSystem('S1', 40012, 40008, 43009, 48739, 40033, 47398, 48785, 47394, None , 43161, 44270, 47011, 47007, 47015, 47016, None),
