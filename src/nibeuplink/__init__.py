@@ -155,11 +155,6 @@ class Uplink():
             else:
                 _LOGGER.info("Ignoring access data due to changed scope {}".format(scope))
 
-        if self.access_data:
-            self.auth = BearerAuth(self.access_data['access_token'])
-        else:
-            self.auth = None
-
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
@@ -185,10 +180,24 @@ class Uplink():
         if 'access_token' not in data:
             raise ValueError('Error in reply {}'.format(data))
 
+        if 'expires_in' in data:
+            _LOGGER.debug("Token will expire in %s seconds",
+                          data['expires_in'])
+            expires = datetime.now() + timedelta(seconds=data['expires_in'])
+        else:
+            expires = None
+
+        data['access_token_expires'] = expires.isoformat()
+
         self.access_data = data
         if self.access_data_write:
             self.access_data_write(data)
-        self.auth = BearerAuth(self.access_data['access_token'])
+
+    async def _get_auth(self):
+        if self.access_data:
+            return BearerAuth(self.access_data['access_token'])
+        else:
+            return None
 
     async def get_access_token(self, code):
         payload = {
@@ -204,7 +213,7 @@ class Uplink():
 
     async def refresh_access_token(self):
         _LOGGER.debug('Refreshing access token with refresh token %s',
-                      self.refresh_token)
+                      self.access_data['refresh_token'])
         payload = {
             'grant_type'    : 'refresh_token',
             'refresh_token' : self.access_data['refresh_token'],
@@ -255,15 +264,18 @@ class Uplink():
             )
 
     async def _request(self, fun, *args, **kw):
-
-        response = await fun(*args, auth = self.auth, **kw)
+        response = await fun(*args,
+                             auth=await self._get_auth(),
+                             **kw)
         try:
             if response.status == 401:
                 _LOGGER.debug(response)
                 _LOGGER.info("Attempting to refresh token due to error in request")
                 await self.refresh_access_token()
                 response.close()
-                response = await fun(*args, auth=self.auth, **kw)
+                response = await fun(*args,
+                                     auth=await self._get_auth(),
+                                     **kw)
 
             await raise_for_status(response)
 
