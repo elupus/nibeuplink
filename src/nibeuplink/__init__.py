@@ -212,6 +212,10 @@ class Uplink():
             self._handle_access_token(await response.json())
 
     async def refresh_access_token(self):
+        if not self.access_data or 'refresh_token' not in self.access_data:
+            _LOGGER.warning("No refresh token available for refresh")
+            return
+
         _LOGGER.debug('Refreshing access token with refresh token %s',
                       self.access_data['refresh_token'])
         payload = {
