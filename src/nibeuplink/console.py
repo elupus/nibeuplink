@@ -52,10 +52,6 @@ def token_read():
             return json.load(myfile)
     except FileNotFoundError:
         return None
-    except:
-        _LOGGER.warning('Failed to load previous token: %s' % sys.exc_info()[0])
-        return None
-
 
 def token_write(token):
     with open(STORE, 'w') as myfile:
