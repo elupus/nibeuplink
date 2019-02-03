@@ -108,7 +108,7 @@ async def run():
                 todo.extend([uplink.get_notifications(args.system)])
 
             if args.setparameter:
-                todo.extend([uplink.set_parameter(args.system, p[0], p[1]) for p in args.setparameter])
+                todo.extend([uplink.put_parameter(args.system, p[0], p[1]) for p in args.setparameter])
 
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
