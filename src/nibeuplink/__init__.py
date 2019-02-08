@@ -51,6 +51,7 @@ class HotWaterSystem(object):
     stop_temperature_water_economy = attr.ib()
     start_temperature_water_economy = attr.ib()
     total_hot_water_compressor_time = attr.ib()
+    hot_water_boost = attr.ib()
 
 
 @attr.s
@@ -80,7 +81,8 @@ PARAM_HOTWATER_SYSTEMS = {
                         47043,
                         47049,
                         47045,
-                        43424)
+                        43424,
+                        'hot_water_boost')
 }
 
 PARAM_CLIMATE_SYSTEMS = {
