@@ -53,6 +53,20 @@ class HotWaterSystem(object):
     total_hot_water_compressor_time = attr.ib()
 
 
+@attr.s
+class VentilationSystem(object):
+    name = attr.ib()
+    fan_speed = attr.ib()
+    exhaust_air = attr.ib()  # BT20
+    extract_air = attr.ib()  # BT21
+    exhaust_speed_normal = attr.ib()
+    exhaust_speed_1 = attr.ib()
+    exhaust_speed_2 = attr.ib()
+    exhaust_speed_3 = attr.ib()
+    exhaust_speed_4 = attr.ib()
+    ventilation_boost = attr.ib()
+
+
 PARAM_HOTWATER_SYSTEMS = {
     '1': HotWaterSystem('Hot Water',
                         40014,
@@ -75,6 +89,19 @@ PARAM_CLIMATE_SYSTEMS = {
     '2': ClimateSystem('S2', 40129, 40007, 43008, 48738, 40032, 47397, 48784, 47393, 47302, 43160, 44269, 47010, 47006, 47014, 47017, 44746), # noqa: 501
     '3': ClimateSystem('S3', 40128, 40006, 43007, 48737, 40031, 47396, 48783, 47392, 47303, 43159, 44268, 47009, 47005, 47013, 47018, 44745), # noqa: 501
     '4': ClimateSystem('S4', 40127, 40005, 43006, 48736, 40030, 47395, 48782, 47391, 47304, 43158, 44267, 47008, 47004, 47012, 47019, 44744), # noqa: 501
+}
+
+PARAM_VENTILATION_SYSTEMS = {
+    '1': VentilationSystem('Ventilation',
+                           10001,
+                           40025,
+                           40026,
+                           47265,
+                           47264,
+                           47263,
+                           47262,
+                           47261,
+                           'ventilation_boost')
 }
 
 PARAM_PUMP_SPEED_HEATING_MEDIUM = 43437
