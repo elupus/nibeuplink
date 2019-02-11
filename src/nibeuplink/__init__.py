@@ -4,7 +4,6 @@ from itertools import islice
 import asyncio
 import aiohttp
 import uuid
-from collections import namedtuple
 from datetime import datetime, timedelta
 
 from urllib.parse import urlencode, urlsplit, parse_qs
