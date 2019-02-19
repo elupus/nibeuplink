@@ -25,7 +25,8 @@ parser.add_argument('--status', action='store_true')
 parser.add_argument('--parameter', nargs='+', type=str)
 parser.add_argument('--setparameter', nargs='+', type=pair)
 parser.add_argument('--units', action='store_true')
-parser.add_argument('--notifications', action='store_true')
+parser.add_argument('--alarms', action='store_true')
+parser.add_argument('--info', action='store_true')
 parser.add_argument('--unit', type=int, default=0)
 parser.add_argument('--unit_status', action='store_true')
 parser.add_argument('--verbose', action='store_true')
@@ -103,8 +104,11 @@ async def run():
             if args.units:
                 todo.extend([uplink.get_units(args.system)])
 
-            if args.notifications:
+            if args.alarms:
                 todo.extend([uplink.get_notifications(args.system)])
+
+            if args.info:
+                todo.extend([uplink.get_notifications(args.system, notifiction_type=1)])
 
             if args.setparameter:
                 todo.extend([uplink.set_parameter(args.system, p[0], p[1]) for p in args.setparameter])
