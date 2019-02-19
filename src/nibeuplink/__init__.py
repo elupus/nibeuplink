@@ -5,9 +5,11 @@ import asyncio
 import aiohttp
 import uuid
 from datetime import datetime, timedelta
+from typing import List
 
 from urllib.parse import urlencode, urlsplit, parse_qs
 
+from .typing import StatusItemIcon
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -453,7 +455,7 @@ class Uplink():
         _LOGGER.debug("Requesting status on system {}".format(system_id))
         return await self.get('systems/{}/status/system'.format(system_id))
 
-    async def get_status(self, system_id: int):
+    async def get_status(self, system_id: int) -> List[StatusItemIcon]:
         data = await self.get_status_raw(system_id)
         for status in data:
             if status['parameters']:
