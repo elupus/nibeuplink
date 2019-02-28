@@ -1,3 +1,6 @@
 *.egg-info 
 __pycache__
 console.pickle
+.pytest_cache
+build
+dist
