@@ -23,7 +23,7 @@ parser.add_argument('--categories', action='store_true')
 parser.add_argument('--category', nargs='+')
 parser.add_argument('--status', action='store_true')
 parser.add_argument('--parameter', nargs='+', type=str)
-parser.add_argument('--setparameter', nargs='+', type=pair)
+parser.add_argument('--put_parameter', nargs='+', type=pair)
 parser.add_argument('--units', action='store_true')
 parser.add_argument('--alarms', action='store_true')
 parser.add_argument('--info', action='store_true')
@@ -64,7 +64,7 @@ def token_write(token):
 async def run():
 
     scope = ['READSYSTEM']
-    if args.setparameter:
+    if args.set_parameter:
         scope.append('WRITESYSTEM')
 
     async with nibeuplink.Uplink(client_id         = args.client_id,
@@ -110,8 +110,8 @@ async def run():
             if args.info:
                 todo.extend([uplink.get_notifications(args.system, notifiction_type=1)])
 
-            if args.setparameter:
-                todo.extend([uplink.set_parameter(args.system, p[0], p[1]) for p in args.setparameter])
+            if args.put_parameter:
+                todo.extend([uplink.put_parameter(args.system, p[0], p[1]) for p in args.put_parameter])
 
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
