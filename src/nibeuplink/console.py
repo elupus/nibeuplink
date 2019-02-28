@@ -64,7 +64,7 @@ def token_write(token):
 async def run():
 
     scope = ['READSYSTEM']
-    if args.set_parameter:
+    if args.put_parameter:
         scope.append('WRITESYSTEM')
 
     async with nibeuplink.Uplink(client_id         = args.client_id,
