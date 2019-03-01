@@ -12,7 +12,7 @@ setup(
     install_requires=[
         'asyncio',
         'aiohttp',
-        'attrs',
+        'attrs>18.1',
         'cattrs',
     ],
     extras_require={
