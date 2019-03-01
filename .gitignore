@@ -4,3 +4,5 @@ console.pickle
 .pytest_cache
 build
 dist
+.vscode/settings.json
+.coverage
