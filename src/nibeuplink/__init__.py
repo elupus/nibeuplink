@@ -583,7 +583,6 @@ class Uplink():
     async def get_smarthome_thermostats(self,
                                         system_id: int) -> List[Thermostat]:
         data = await self.get('systems/{}/smarthome/thermostats'.format(system_id))
-        print(data)
         _LOGGER.debug("Get smarthome thermostats %s", data)
         return cattr.structure(data, List[Thermostat])
 
