@@ -20,7 +20,7 @@ setup(
             'pytest',
             'pytest-asyncio',
             'pytest-aiohttp',
-            'pytest-cov',
+            'pytest-cov<2.6',
             'coveralls'
         ]
     },
