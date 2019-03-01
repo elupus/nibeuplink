@@ -39,7 +39,7 @@ System = namedtuple('System', ['parameters', 'notifications'])
 class Uplink:
     def __init__(self, loop):
         self.loop    = loop
-        self.app     = web.Application(loop=loop)
+        self.app     = web.Application()
         self.app.router.add_routes([
             web.post('/oauth/token', self.on_oauth_token),
             web.post('/oauth/authorize', self.on_oauth_authorize),
