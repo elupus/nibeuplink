@@ -111,6 +111,11 @@ PARAM_PUMP_SPEED_HEATING_MEDIUM = 43437
 PARAM_COMPRESSOR_FREQUENCY = 43136
 PARAM_STATUS_COOLING = 43024
 
+SMARTHOME_MODES = {
+    0: 'DEFAULT_OPERATION',
+    1: 'AWAY_FROM_HOME',
+    2: 'VACATION',
+}
 
 def chunks(data, SIZE):
     it = iter(data)
@@ -295,6 +300,16 @@ class Uplink():
                 '{}/api/v1/{}'.format(self.base, url),
                 params = params,
                 headers= {},
+            )
+
+    async def put(self, url, **kwargs):
+        async with self.lock:
+            await self._get_throttle()
+
+            return await self._request(
+                self.session.put,
+                '{}/api/v1/{}'.format(self.base, url),
+                **kwargs
             )
 
     async def _request(self, fun, *args, **kw):
@@ -488,3 +503,29 @@ class Uplink():
         }
         data = await self.get('systems/{}/notifications'.format(system_id), params=params)
         return data['objects']
+
+
+    async def get_smarthome_mode(self,
+                                 system_id: int):
+        data = await self.get('systems/{}/smarthome/mode'.format(system_id))
+        mode = data['mode']
+        _LOGGER.debug("Smarthome mode %s", mode)
+        return mode
+
+    async def put_smarthome_mode(self,
+                                 system_id: int,
+                                 mode: str):
+        headers = {
+            'Accept'      : 'application/json',
+            'Content-Type': 'application/json;charset=UTF-8'
+        }
+
+        data = {
+            'mode': mode
+        }
+        data = await self.put(
+            'systems/{}/smarthome/mode'.format(system_id),
+            json=data,
+            headers=headers)
+        _LOGGER.debug("Smarthome mode %s", mode)
+

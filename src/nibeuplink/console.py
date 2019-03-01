@@ -30,6 +30,8 @@ parser.add_argument('--info', action='store_true')
 parser.add_argument('--unit', type=int, default=0)
 parser.add_argument('--unit_status', action='store_true')
 parser.add_argument('--verbose', action='store_true')
+parser.add_argument('--smarthome_mode', action='store_true')
+parser.add_argument('--put_smarthome_mode', type=str)
 
 args = parser.parse_args()
 
@@ -64,7 +66,7 @@ def token_write(token):
 async def run():
 
     scope = ['READSYSTEM']
-    if args.put_parameter:
+    if args.put_parameter or args.put_smarthome_mode:
         scope.append('WRITESYSTEM')
 
     async with nibeuplink.Uplink(client_id         = args.client_id,
@@ -112,6 +114,12 @@ async def run():
 
             if args.put_parameter:
                 todo.extend([uplink.put_parameter(args.system, p[0], p[1]) for p in args.put_parameter])
+
+            if args.smarthome_mode:
+                todo.extend([uplink.get_smarthome_mode(args.system)])
+
+            if args.put_smarthome_mode:
+                todo.extend([uplink.put_smarthome_mode(args.system, args.put_smarthome_mode)])
 
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
