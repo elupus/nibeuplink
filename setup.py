@@ -17,7 +17,7 @@ setup(
     ],
     extras_require={
         'tests': [
-            'pytest',
+            'pytest>3.6.4',
             'pytest-asyncio',
             'pytest-aiohttp',
             'pytest-cov<2.6',
