@@ -12,6 +12,8 @@ setup(
     install_requires=[
         'asyncio',
         'aiohttp',
+        'attrs',
+        'cattrs',
     ],
     extras_require={
         'tests': [
