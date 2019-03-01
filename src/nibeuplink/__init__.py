@@ -6,7 +6,7 @@ import asyncio
 import aiohttp
 import uuid
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Optional
 
 from urllib.parse import urlencode, urlsplit, parse_qs
 
@@ -26,10 +26,34 @@ class Parameter(object):
     displayValue = attr.ib()
     rawValue = attr.ib()
 
+
 @attr.s
 class ParameterExtended(Parameter):
     value = attr.ib()
 
+
+@attr.s
+class SmartHomeSystem(object):
+    name: str = attr.ib()
+
+
+@attr.s
+class Thermostat(object):
+    smartHomeSystem: SmartHomeSystem = attr.ib()
+    name: str = attr.ib()
+    climateSystems: Optional[List[int]] = attr.ib(default=None)
+    currentTemperature: Optional[str] = attr.ib(default=None)
+    targetTemperature: Optional[str] = attr.ib(default=None)
+
+
+@attr.s
+class SetThermostatModel(object):
+    externalId: int = attr.ib()
+    name: str = attr.ib()
+    actualTemp: Optional[int] = attr.ib(default=None)
+    targetTemp: Optional[int] = attr.ib(default=None)
+    valvePosition: Optional[int] = attr.ib(default=None)
+    climateSystems: Optional[List[int]] = attr.ib(default=None)
 
 @attr.s
 class ClimateSystem(object):
@@ -327,6 +351,16 @@ class Uplink():
                 **kwargs
             )
 
+    async def post(self, url, **kwargs):
+        async with self.lock:
+            await self._get_throttle()
+
+            return await self._request(
+                self.session.post,
+                '{}/api/v1/{}'.format(self.base, url),
+                **kwargs
+            )
+
     async def _request(self, fun, *args, **kw):
         response = await fun(*args,
                              auth=await self._get_auth(),
@@ -524,8 +558,9 @@ class Uplink():
                                  system_id: int):
         data = await self.get('systems/{}/smarthome/mode'.format(system_id))
         mode = data['mode']
-        _LOGGER.debug("Smarthome mode %s", mode)
+        _LOGGER.debug("Get smarthome mode %s", mode)
         return mode
+
 
     async def put_smarthome_mode(self,
                                  system_id: int,
@@ -542,5 +577,28 @@ class Uplink():
             'systems/{}/smarthome/mode'.format(system_id),
             json=data,
             headers=headers)
-        _LOGGER.debug("Smarthome mode %s", mode)
+        _LOGGER.debug("Set smarthome mode %s -> %s", mode, data)
 
+
+    async def get_smarthome_thermostats(self,
+                                 system_id: int):
+        data = await self.get('systems/{}/smarthome/thermostats'.format(system_id))
+        print(data)
+        _LOGGER.debug("Get smarthome thermostats %s", data)
+        return cattr.structure(data, List[Thermostat])
+
+
+    async def post_smarthome_thermostats(self,
+                                         system_id: int,
+                                         thermostat: SetThermostatModel):
+        headers = {
+            'Accept'      : 'application/json',
+            'Content-Type': 'application/json;charset=UTF-8'
+        }
+
+        data = attr.asdict(thermostat)
+        data = await self.post(
+            'systems/{}/smarthome/thermostats'.format(system_id),
+            json=data,
+            headers=headers)
+        _LOGGER.debug("Post smarthome thermostat %s -> %s", thermostat , data)

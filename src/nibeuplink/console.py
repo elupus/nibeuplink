@@ -6,12 +6,17 @@ from urllib.parse import urldefrag, parse_qs
 
 import nibeuplink
 import argparse
+import cattr
 
 _LOGGER = logging.getLogger(__name__)
 
 def pair(arg):
     data = arg.split('=')
     return (data[0], data[1])
+
+def thermostat(arg):
+    data = json.loads(arg)
+    return cattr.structure(data, nibeuplink.SetThermostatModel)
 
 parser = argparse.ArgumentParser(description='Read data from nibe uplink.')
 parser.add_argument('--client_id'    , required=True)
@@ -32,6 +37,8 @@ parser.add_argument('--unit_status', action='store_true')
 parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--smarthome_mode', action='store_true')
 parser.add_argument('--put_smarthome_mode', type=str)
+parser.add_argument('--smarthome_thermostats', action='store_true')
+parser.add_argument('--post_smarthome_thermostats', type=thermostat)
 
 args = parser.parse_args()
 
@@ -120,6 +127,12 @@ async def run():
 
             if args.put_smarthome_mode:
                 todo.extend([uplink.put_smarthome_mode(args.system, args.put_smarthome_mode)])
+
+            if args.smarthome_thermostats:
+                todo.extend([uplink.get_smarthome_thermostats(args.system)])
+
+            if args.post_smarthome_thermostats:
+                todo.extend([uplink.post_smarthome_thermostats(args.system, args.post_smarthome_thermostats)])
 
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
