@@ -125,7 +125,11 @@ async def run():
                 todo.extend([uplink.get_system(args.system)])
 
         res = await asyncio.gather(*todo)
-        print(json.dumps(res, indent=1))
+        for a in res:
+            if isinstance(a, dict):
+                print(json.dumps(a, indent=1))
+            else:
+                print(a)
 
 
 
