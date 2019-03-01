@@ -555,7 +555,7 @@ class Uplink():
 
 
     async def get_smarthome_mode(self,
-                                 system_id: int):
+                                 system_id: int) -> str:
         data = await self.get('systems/{}/smarthome/mode'.format(system_id))
         mode = data['mode']
         _LOGGER.debug("Get smarthome mode %s", mode)
@@ -564,7 +564,7 @@ class Uplink():
 
     async def put_smarthome_mode(self,
                                  system_id: int,
-                                 mode: str):
+                                 mode: str) -> None:
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
@@ -581,7 +581,7 @@ class Uplink():
 
 
     async def get_smarthome_thermostats(self,
-                                 system_id: int):
+                                        system_id: int) -> List[Thermostat]:
         data = await self.get('systems/{}/smarthome/thermostats'.format(system_id))
         print(data)
         _LOGGER.debug("Get smarthome thermostats %s", data)
@@ -590,7 +590,7 @@ class Uplink():
 
     async def post_smarthome_thermostats(self,
                                          system_id: int,
-                                         thermostat: SetThermostatModel):
+                                         thermostat: SetThermostatModel) -> None:
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
