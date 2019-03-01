@@ -1,4 +1,5 @@
 import attr
+import cattr
 import logging
 from itertools import islice
 import asyncio
@@ -14,6 +15,20 @@ from .typing import StatusItemIcon
 _LOGGER = logging.getLogger(__name__)
 
 MAX_REQUEST_PARAMETERS = 15
+
+@attr.s
+class Parameter(object):
+    parameterId = attr.ib()
+    name = attr.ib()
+    title = attr.ib()
+    designation = attr.ib()
+    unit = attr.ib()
+    displayValue = attr.ib()
+    rawValue = attr.ib()
+
+@attr.s
+class ParameterExtended(Parameter):
+    value = attr.ib()
 
 
 @attr.s
