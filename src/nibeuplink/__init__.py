@@ -39,8 +39,8 @@ class SmartHomeSystem(object):
 
 @attr.s
 class Thermostat(object):
-    smartHomeSystem: SmartHomeSystem = attr.ib()
-    name: str = attr.ib()
+    smartHomeSystem = attr.ib(type=SmartHomeSystem)
+    name = attr.ib(type=str)
     climateSystems = attr.ib(default=None, type=Optional[List[int]])
     currentTemperature = attr.ib(default=None, type=Optional[str])
     targetTemperature = attr.ib(default=None, type=Optional[str])
@@ -48,8 +48,8 @@ class Thermostat(object):
 
 @attr.s
 class SetThermostatModel(object):
-    externalId: int = attr.ib()
-    name: str = attr.ib()
+    externalId = attr.ib(type=int)
+    name = attr.ib(type=str)
     actualTemp = attr.ib(default=None, type=Optional[int])
     targetTemp = attr.ib(default=None, type=Optional[int])
     valvePosition = attr.ib(default=None, type=Optional[int])
