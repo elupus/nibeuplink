@@ -16,29 +16,37 @@ DEFAULT_CODE          = '789'
 DEFAULT_SYSTEMID      = 123456
 
 
+def fin_async(event_loop, coro):
+    def fun():
+        event_loop.run_until_complete(coro())
+    return fun
+
+
 @pytest.mark.asyncio
 @pytest.fixture
-async def default_uplink(event_loop):
+async def default_uplink(event_loop, request):
     def access_write(data):
         pass
 
     server = fake_uplink.Uplink(event_loop)
 
+    request.addfinalizer(fin_async(event_loop, server.stop))
+
     await server.start()
 
-    async with nibeuplink.Uplink(DEFAULT_CLIENT_ID,
-                                 DEFAULT_CLIENT_SECRET,
-                                 server.redirect,
-                                 None,
-                                 access_write,
-                                 scope = DEFAULT_SCOPE,
-                                 base  = server.base) as uplink:
+    uplink = nibeuplink.Uplink(DEFAULT_CLIENT_ID,
+                               DEFAULT_CLIENT_SECRET,
+                               server.redirect,
+                               None,
+                               access_write,
+                               scope = DEFAULT_SCOPE,
+                               base  = server.base)
 
-        # Override the default throttling to 0 to speed up tests
-        uplink.THROTTLE = timedelta(seconds = 0)
-        yield uplink, server
+    request.addfinalizer(fin_async(event_loop, uplink.close))
 
-    await server.stop()
+    # Override the default throttling to 0 to speed up tests
+    uplink.THROTTLE = timedelta(seconds = 0)
+    return uplink, server
 
 
 @pytest.mark.asyncio
@@ -80,7 +88,7 @@ async def uplink_with_data(default_uplink):
     # Make sure we have a token
     await default_uplink[0].get_access_token(DEFAULT_CODE)
 
-    yield default_uplink[0], default_uplink[1]
+    return default_uplink[0], default_uplink[1]
 
 
 @pytest.mark.asyncio
