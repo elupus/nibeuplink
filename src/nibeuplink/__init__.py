@@ -34,7 +34,7 @@ class ParameterExtended(Parameter):
 
 @attr.s
 class SmartHomeSystem(object):
-    name: str = attr.ib()
+    name = attr.ib(type=str)
 
 
 @attr.s
