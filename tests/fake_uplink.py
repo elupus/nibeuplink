@@ -197,7 +197,7 @@ class Uplink:
         data = await request.json()
         response = []
 
-        for key, value in data['settings'].items():
+        for key in data['settings'].keys():
             response.append({
                 'status'   : 'DONE',
                 'parameter': self.systems[systemid].parameters[str(key)]
