@@ -135,7 +135,7 @@ class Uplink:
             'code' : 'dummycode',
         })
 
-        return aiohttp.web.HTTPFound(urlunsplit(url))
+        raise aiohttp.web.HTTPFound(urlunsplit(url))
 
     def expire_tokens(self):
         for t in self.tokens:
