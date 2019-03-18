@@ -596,8 +596,8 @@ class Uplink():
         }
 
         data = attr.asdict(thermostat)
-        data = await self.post(
+        _LOGGER.debug("Post smarthome thermostat %s -> %s", thermostat , data)
+        await self.post(
             'systems/{}/smarthome/thermostats'.format(system_id),
             json=data,
             headers=headers)
-        _LOGGER.debug("Post smarthome thermostat %s -> %s", thermostat , data)
