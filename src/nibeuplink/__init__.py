@@ -50,8 +50,8 @@ class Thermostat(object):
 class SetThermostatModel(object):
     externalId = attr.ib(type=int)
     name = attr.ib(type=str)
-    actualTemp = attr.ib(default=None, type=Optional[int])
-    targetTemp = attr.ib(default=None, type=Optional[int])
+    actualTemp = attr.ib(default=None, type=Optional[int]) # Multiplied by 10
+    targetTemp = attr.ib(default=None, type=Optional[int]) # Multiplied by 10
     valvePosition = attr.ib(default=None, type=Optional[int])
     climateSystems = attr.ib(default=None, type=Optional[List[int]])
 
