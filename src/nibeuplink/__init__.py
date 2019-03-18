@@ -159,7 +159,7 @@ SMARTHOME_MODES = {
 
 def chunks(data, SIZE):
     it = iter(data)
-    for i in range(0, len(data), SIZE):
+    for _ in range(0, len(data), SIZE):
         yield {k: data[k] for k in islice(it, SIZE)}
 
 
