@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from urllib.parse import urlencode, urlsplit, parse_qs
 
+from .exceptions import UplinkResponseException, UplinkException
 from .typing import StatusItemIcon
 
 _LOGGER = logging.getLogger(__name__)
@@ -174,13 +175,22 @@ def chunk_pop(data, SIZE):
 
 async def raise_for_status(response):
     if 400 <= response.status:
-        raise aiohttp.ClientResponseError(
+        e = aiohttp.ClientResponseError(
             response.request_info,
             response.history,
             code=response.status,
-            message=await response.text(),
             headers=response.headers)
 
+        if 'json' in response.headers.get('CONTENT-TYPE', ''):
+            data = await response.json()
+            e.message = str(data)
+            raise UplinkResponseException(
+                data.get('errorCode'),
+                data) from e
+
+        else:
+            data = await response.text()
+            raise UplinkException(data) from e
 
 class BearerAuth(aiohttp.BasicAuth):
     def __init__(self, access_token):
