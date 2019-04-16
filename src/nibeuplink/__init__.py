@@ -206,10 +206,31 @@ class ParameterRequest:
         self.data         = None
         self.done         = False
 
+class Throttle():
+    """
+    Throttling requests to API.
+
+    Works by awaiting our turn then executing the request,
+    and scheduling next request at a delay after the previous
+    request completed.
+    """
+    def __init__(self, delay):
+        self._delay = delay
+        self._timestamp = datetime.now()
+
+    async def __aenter__(self):
+        timestamp = datetime.now()
+        delay = (self._timestamp - timestamp).total_seconds()
+        if delay > 0:
+            _LOGGER.debug("Delaying request by %s seconds due to throttle", delay)
+            await asyncio.sleep(delay)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self._timestamp = datetime.now() + self._delay
 
 class Uplink():
 
-    THROTTLE = timedelta(seconds = 4)
 
     def __init__(self,
                  client_id,
@@ -219,7 +240,8 @@ class Uplink():
                  access_data_write = None,
                  scope = ['READSYSTEM'],
                  loop = None,
-                 base = 'https://api.nibeuplink.com'):
+                 base = 'https://api.nibeuplink.com',
+                 throttle = 4.5):
 
         self.redirect_uri      = redirect_uri
         self.client_id         = client_id
@@ -227,6 +249,7 @@ class Uplink():
         self.state             = None
         self.scope             = scope
         self.lock              = asyncio.Lock()
+        self.throttle          = Throttle(timedelta(seconds=throttle))
         self.session           = None
         self.loop              = loop
         self.base              = base
@@ -247,7 +270,6 @@ class Uplink():
         self.session           = aiohttp.ClientSession(headers   = headers,
                                                        auth      = aiohttp.BasicAuth(client_id, client_secret))
         self.requests          = {}
-        self.timestamp         = datetime.now()
 
     async def __aenter__(self):
         return self
@@ -331,45 +353,33 @@ class Uplink():
             raise ValueError('Invalid state in url {} expected {}'.format(query['state'], self.state))
         return query['code'][0]
 
-    async def _get_throttle(self):
-        """ Throttle requests to API to once every MIN_REQUEST_DELAY """
-        timestamp = datetime.now()
-
-        delay = (self.timestamp - timestamp).total_seconds()
-        if delay > 0:
-            await asyncio.sleep(delay)
-        self.timestamp = timestamp + self.THROTTLE
-
     async def get(self, url, params = {}):
         async with self.lock:
-            await self._get_throttle()
-
-            return await self._request(
-                self.session.get,
-                '{}/api/v1/{}'.format(self.base, url),
-                params = params,
-                headers= {},
-            )
+            async with self.throttle:
+                return await self._request(
+                    self.session.get,
+                    '{}/api/v1/{}'.format(self.base, url),
+                    params = params,
+                    headers= {},
+                )
 
     async def put(self, url, **kwargs):
         async with self.lock:
-            await self._get_throttle()
-
-            return await self._request(
-                self.session.put,
-                '{}/api/v1/{}'.format(self.base, url),
-                **kwargs
-            )
+            async with self.throttle:
+                return await self._request(
+                    self.session.put,
+                    '{}/api/v1/{}'.format(self.base, url),
+                    **kwargs
+                )
 
     async def post(self, url, **kwargs):
         async with self.lock:
-            await self._get_throttle()
-
-            return await self._request(
-                self.session.post,
-                '{}/api/v1/{}'.format(self.base, url),
-                **kwargs
-            )
+            async with self.throttle:
+                return await self._request(
+                    self.session.post,
+                    '{}/api/v1/{}'.format(self.base, url),
+                    **kwargs
+                )
 
     async def _request(self, fun, *args, **kw):
         response = await fun(*args,
@@ -417,22 +427,19 @@ class Uplink():
                 if len(self.requests[system_id]) == 0:
                     break
 
-                # Throttle requests to API, during this
-                # new requests can be added
-                await self._get_throttle()
+                async with self.throttle:
+                    # chop of as many requests from start as possible
+                    requests = chunk_pop(self.requests[system_id],
+                                        MAX_REQUEST_PARAMETERS)
 
-                # chop of as many requests from start as possible
-                requests = chunk_pop(self.requests[system_id],
-                                     MAX_REQUEST_PARAMETERS)
+                    _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
 
-                _LOGGER.debug("Requesting parameters {}".format([str(x.parameter_id) for x in requests]))
-
-                data = await self._request(
-                    self.session.get,
-                    '{}/api/v1/systems/{}/parameters'.format(self.base, system_id),
-                    params  = [('parameterIds', str(x.parameter_id)) for x in requests],
-                    headers = {},
-                )
+                    data = await self._request(
+                        self.session.get,
+                        '{}/api/v1/systems/{}/parameters'.format(self.base, system_id),
+                        params  = [('parameterIds', str(x.parameter_id)) for x in requests],
+                        headers = {},
+                    )
 
                 lookup = {p['name']: p for p in data}
 
