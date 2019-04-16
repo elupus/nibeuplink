@@ -3,7 +3,7 @@ import pytest
 import nibeuplink
 import asyncio
 import fake_uplink
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -302,3 +302,27 @@ async def test_parameters(default_uplink, count):
 
     # Check that we don't issue more requests than we need
     assert server.requests['on_get_parameters'] == int((len(parameterids) + 14) / 15)
+
+@pytest.mark.asyncio
+async def test_throttle_initial():
+  """No inital delay"""
+  start = datetime.now()
+  throttle = nibeuplink.Throttle(timedelta(seconds=1))
+  async with throttle:
+    pass
+  assert (datetime.now() - start) < timedelta(seconds=1)
+
+
+@pytest.mark.asyncio
+async def test_throttle_time_from_finish():
+  """Time counted from end of with block (assumes no inital)"""
+  start = datetime.now()
+  throttle = nibeuplink.Throttle(timedelta(seconds=1))
+  async with throttle:
+    await asyncio.sleep(1)
+  async with throttle:
+    pass
+  now = datetime.now()
+  assert (now - start) > timedelta(seconds=2)
+  assert (now - start) < timedelta(seconds=3)
+
