@@ -6,7 +6,7 @@ import asyncio
 import aiohttp
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from urllib.parse import urlencode, urlsplit, parse_qs
 
@@ -513,7 +513,7 @@ class Uplink():
         self.add_parameter_extensions(data)
         return data
 
-    async def put_parameter(self, system_id: int, parameter_id: str, value):
+    async def put_parameter(self, system_id: int, parameter_id: str, value: Any):
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
@@ -521,7 +521,7 @@ class Uplink():
 
         data = {
             'settings': {
-                str(parameter_id): str(value)
+                str(parameter_id): value
             }
         }
 
