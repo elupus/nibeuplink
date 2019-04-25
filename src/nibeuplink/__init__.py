@@ -80,10 +80,10 @@ class ClimateSystem(object):
 @attr.s
 class HotWaterSystem(object):
     name = attr.ib()
-    hot_water_charging = attr.ib()
-    hot_water_top = attr.ib()
+    hot_water_charging = attr.ib()            # BT6
+    hot_water_top = attr.ib()                 # BT7
     hot_water_comfort_mode = attr.ib()
-    hot_water_production = attr.ib()
+    hot_water_production = attr.ib()          # Active or not
     periodic_hot_water = attr.ib()
     stop_temperature_water_normal = attr.ib()
     start_temperature_water_normal = attr.ib()
@@ -115,6 +115,48 @@ PARAM_HOTWATER_SYSTEMS = {
                         40013,
                         47041,
                         47387,
+                        47050,
+                        47048,
+                        47044,
+                        47047,
+                        47043,
+                        47049,
+                        47045,
+                        43424,
+                        'hot_water_boost'),
+    'DEW': HotWaterSystem('Hot Water (DEW)',
+                        40077,
+                        40078,
+                        47041,
+                        47555,
+                        47050,
+                        47048,
+                        47044,
+                        47047,
+                        47043,
+                        47049,
+                        47045,
+                        43424,
+                        'hot_water_boost'),
+    'SCA': HotWaterSystem('Hot Water (SCA)',
+                        40077,
+                        40078,
+                        47041,
+                        49224,
+                        47050,
+                        47048,
+                        47044,
+                        47047,
+                        47043,
+                        47049,
+                        47045,
+                        43424,
+                        'hot_water_boost'),
+    'AHPS': HotWaterSystem('Hot Water (AHPS)',
+                        40077,
+                        40078,
+                        47041,
+                        48641,
                         47050,
                         47048,
                         47044,
