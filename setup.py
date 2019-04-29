@@ -33,7 +33,7 @@ setup(
         ]
     },
     entry_points = {
-        'console_scripts' : ['nibeuplink=nibeuplink.console:main']
+        'console_scripts' : ['nibeuplink=nibeuplink.__main__']
     },
     url='https://github.com/elupus/nibeuplink',
     classifiers=[
