@@ -11,6 +11,7 @@ from typing import List, Optional, Any
 from urllib.parse import urlencode, urlsplit, parse_qs
 
 from .exceptions import UplinkResponseException, UplinkException
+from .utils import chunks, chunk_pop
 from .typing import StatusItemIcon
 
 _LOGGER = logging.getLogger(__name__)
@@ -198,21 +199,6 @@ SMARTHOME_MODES = {
     1: 'AWAY_FROM_HOME',
     2: 'VACATION',
 }
-
-def chunks(data, SIZE):
-    it = iter(data)
-    for _ in range(0, len(data), SIZE):
-        yield {k: data[k] for k in islice(it, SIZE)}
-
-
-def chunk_pop(data, SIZE):
-    count = len(data)
-    if count > SIZE:
-        count = SIZE
-
-    res = data[0:count]
-    del data[0:count]
-    return res
 
 
 async def raise_for_status(response):
