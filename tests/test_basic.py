@@ -307,7 +307,7 @@ async def test_parameters(default_uplink, count):
 async def test_throttle_initial():
   """No inital delay"""
   start = datetime.now()
-  throttle = nibeuplink.Throttle(timedelta(seconds=1))
+  throttle = nibeuplink.uplink.Throttle(timedelta(seconds=1))
   async with throttle:
     pass
   assert (datetime.now() - start) < timedelta(seconds=1)
@@ -317,7 +317,7 @@ async def test_throttle_initial():
 async def test_throttle_time_from_finish():
   """Time counted from end of with block (assumes no inital)"""
   start = datetime.now()
-  throttle = nibeuplink.Throttle(timedelta(seconds=1))
+  throttle = nibeuplink.uplink.Throttle(timedelta(seconds=1))
   async with throttle:
     await asyncio.sleep(1)
   async with throttle:
