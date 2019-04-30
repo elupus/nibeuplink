@@ -10,13 +10,13 @@ from typing import List, Optional, Any
 
 from urllib.parse import urlencode, urlsplit, parse_qs
 
+from .const import MAX_REQUEST_PARAMETERS
 from .exceptions import UplinkResponseException, UplinkException
 from .utils import chunks, chunk_pop
 from .typing import StatusItemIcon
 
 _LOGGER = logging.getLogger(__name__)
 
-MAX_REQUEST_PARAMETERS = 15
 
 @attr.s
 class Parameter(object):
