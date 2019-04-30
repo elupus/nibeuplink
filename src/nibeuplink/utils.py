@@ -1,5 +1,47 @@
 """Utilities for component."""
 from itertools import islice
+from typing import Iterable, Tuple, Any
+from collections import deque
+
+def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
+                   step: int):
+    """Chunked cyclic iterator over a data set.
+
+    Data will be returned in chunks up to `step`
+    size. First tuple iterator will be used as
+    grouping of chunks, and method will peek
+    ahead in iterator to find `step` values
+    to return.
+
+    If `step` values are not found before hitting
+    already returned value, peeking will be stopped
+    """
+    pending = deque()
+    while True:
+        if len(pending) < len(data):
+            pending.extend(data)
+
+        if not pending:
+            yield None, None
+            continue
+
+        curr = pending.popleft()
+        keep = []
+        grab = set()
+        grab.add(curr[1])
+        while pending:
+            val = pending.popleft()
+            if curr[0] == val[0]:
+                if val[1] in grab:
+                    keep.append(val)
+                    break
+                grab.add(val[1])
+            else:
+                keep.append(val)
+            if len(grab) >= step:
+                break
+        pending.extendleft(reversed(keep))
+        yield curr[0], grab
 
 
 def chunks(data, SIZE):

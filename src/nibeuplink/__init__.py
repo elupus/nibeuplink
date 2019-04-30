@@ -13,6 +13,7 @@ from .const import MAX_REQUEST_PARAMETERS
 from .exceptions import UplinkResponseException, UplinkException
 from .utils import chunks, chunk_pop
 from .typing import StatusItemIcon
+from .monitor import Monitor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -255,6 +256,7 @@ class Throttle():
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self._timestamp = datetime.now() + self._delay
+
 
 class Uplink():
 
