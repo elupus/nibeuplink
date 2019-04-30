@@ -1,7 +1,6 @@
 import attr
 import cattr
 import logging
-from itertools import islice
 import asyncio
 import aiohttp
 import uuid
