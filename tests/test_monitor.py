@@ -29,7 +29,7 @@ async def test_monitor_1(uplink_mock):
 
     await monitor.run_once()
 
-    callback_a.assert_called_once_with(1, PARAMETERS['a'])
+    callback_a.assert_called_once_with(1, {'a': PARAMETERS['a']})
 
 @pytest.mark.asyncio
 async def test_monitor_multiple_on_same_parameter(uplink_mock):
@@ -43,8 +43,8 @@ async def test_monitor_multiple_on_same_parameter(uplink_mock):
 
     await monitor.run_once()
 
-    callback_a1.assert_called_once_with(1, PARAMETERS['a'])
-    callback_a2.assert_called_once_with(1, PARAMETERS['a'])
+    callback_a1.assert_called_once_with(1, {'a': PARAMETERS['a']})
+    callback_a2.assert_called_once_with(1, {'a': PARAMETERS['a']})
 
 @pytest.mark.asyncio
 async def test_monitor_multiple_systems(uplink_mock):
@@ -58,11 +58,11 @@ async def test_monitor_multiple_systems(uplink_mock):
 
     await monitor.run_once()
 
-    callback_a1.assert_called_once_with(1, PARAMETERS['a'])
+    callback_a1.assert_called_once_with(1, {'a': PARAMETERS['a']})
     callback_b2.assert_not_called()
 
     await monitor.run_once()
-    callback_b2.assert_called_once_with(2, PARAMETERS['b'])
+    callback_b2.assert_called_once_with(2, {'b': PARAMETERS['b']})
 
 
 
@@ -78,7 +78,7 @@ async def test_monitor_removed_callback_one(uplink_mock):
 
     await monitor.run_once()
 
-    callback_a1.assert_called_once_with(1, PARAMETERS['a'])
+    callback_a1.assert_called_once_with(1, {'a': PARAMETERS['a']})
     callback_b2.assert_not_called()
 
     monitor.remove(callback_b2)

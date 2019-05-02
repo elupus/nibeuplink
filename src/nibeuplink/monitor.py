@@ -5,6 +5,7 @@ from typing import Callable
 
 from .const import MAX_REQUEST_PARAMETERS
 from .utils import cyclic_tuple
+from .typing import ParameterSet
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,12 +17,12 @@ class Monitor():
         self._callbacks = {}
         self._iterator = cyclic_tuple(self._callbacks, chunks)
 
-    def add(self, system_id: int, parameter_id: str, callback: Callable[[dict], None]):
+    def add(self, system_id: int, parameter_id: str, callback: Callable[[ParameterSet], None]):
         key = (system_id, parameter_id)
         self._callbacks.setdefault(
             key, []).append(callback)
 
-    def remove(self, callback: Callable[[dict], None]):
+    def remove(self, callback: Callable[[ParameterSet], None]):
         to_remove = []
         for key, value in self._callbacks.items():
             if callback in value:
@@ -33,14 +34,19 @@ class Monitor():
             del self._callbacks[key]
 
     def call_callbacks(self, system_id, parameters):
+        parameter_set = {}
+        callbacks = []
+
         for parameter in parameters:
             if not parameter:
                 _LOGGER.debug("Parameter not found for system %s", system_id)
                 continue
 
-            callbacks = self._callbacks.get((system_id, parameter['name']), [])
-            for callback in callbacks:
-                callback(system_id, parameter)
+            parameter_set[parameter['name']] = parameter
+            callbacks.extend(self._callbacks.get((system_id, parameter['name']), []))
+
+        for callback in callbacks:
+            callback(system_id, parameter_set)
 
     async def run_once(self):
         system_id, parameter_ids = next(self._iterator)
