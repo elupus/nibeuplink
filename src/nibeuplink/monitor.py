@@ -17,28 +17,26 @@ class Monitor():
                  uplink: Uplink,
                  chunks: int = MAX_REQUEST_PARAMETERS):
         self._uplink = uplink
-        self._callbacks = {}  # type: Dict[Tuple[SystemId, ParameterId], List[Callback]]
-        self._iterator = cyclic_tuple(self._callbacks, chunks)
+        self._callbacks = []  # type: List[Callback]
+        self._parameters = []  # type: List[Tuple[SystemId, ParameterId]]
+        self._iterator = cyclic_tuple(self._parameters, chunks)
 
-    def add(self, system_id: SystemId, parameter_id: ParameterId, callback: Callback):
+    def add_callback(self, callback):
+        self._callbacks.append(callback)
+
+    def del_callback(self, callback):
+        self._callbacks.remove(callback)
+
+    def add(self, system_id: SystemId, parameter_id: ParameterId):
         key = (system_id, parameter_id)
-        self._callbacks.setdefault(
-            key, []).append(callback)
+        self._parameters.append(key)
 
-    def remove(self, callback: Callback):
-        to_remove = []
-        for key, value in self._callbacks.items():
-            if callback in value:
-                if len(value) == 1:
-                    to_remove.append(key)
-                else:
-                    value.remove(callback)
-        for key in to_remove:
-            del self._callbacks[key]
+    def remove(self, system_id: SystemId, parameter_id: ParameterId):
+        key = (system_id, parameter_id)
+        self._parameters.remove(key)
 
     def call_callbacks(self, system_id: SystemId, parameters: List[Parameter]):
         parameter_set = {} #  type: ParameterSet
-        callbacks = []  #  type: List[Callback]
 
         for parameter in parameters:
             if not parameter:
@@ -46,9 +44,8 @@ class Monitor():
                 continue
 
             parameter_set[parameter['name']] = parameter
-            callbacks.extend(self._callbacks.get((system_id, parameter['name']), []))
 
-        for callback in callbacks:
+        for callback in self._callbacks:
             callback(system_id, parameter_set)
 
     async def run_once(self):

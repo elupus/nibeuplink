@@ -25,44 +25,28 @@ async def test_monitor_1(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
     callback_a = asynctest.Mock()
-    monitor.add(1, 'a', callback_a)
+    monitor.add_callback(callback_a)
+    monitor.add(1, 'a')
 
     await monitor.run_once()
 
     callback_a.assert_called_once_with(1, {'a': PARAMETERS['a']})
 
 @pytest.mark.asyncio
-async def test_monitor_multiple_on_same_parameter(uplink_mock):
-    monitor = nibeuplink.Monitor(uplink_mock)
-
-    callback_a1 = asynctest.Mock()
-    monitor.add(1, 'a', callback_a1)
-
-    callback_a2 = asynctest.Mock()
-    monitor.add(1, 'a', callback_a2)
-
-    await monitor.run_once()
-
-    callback_a1.assert_called_once_with(1, {'a': PARAMETERS['a']})
-    callback_a2.assert_called_once_with(1, {'a': PARAMETERS['a']})
-
-@pytest.mark.asyncio
 async def test_monitor_multiple_systems(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
-    callback_a1 = asynctest.Mock()
-    monitor.add(1, 'a', callback_a1)
+    callback = asynctest.Mock()
+    monitor.add_callback(callback)
 
-    callback_b2 = asynctest.Mock()
-    monitor.add(2, 'b', callback_b2)
-
-    await monitor.run_once()
-
-    callback_a1.assert_called_once_with(1, {'a': PARAMETERS['a']})
-    callback_b2.assert_not_called()
+    monitor.add(1, 'a')
+    monitor.add(2, 'b')
 
     await monitor.run_once()
-    callback_b2.assert_called_once_with(2, {'b': PARAMETERS['b']})
+    await monitor.run_once()
+
+    callback.assert_any_call(1, {'a': PARAMETERS['a']})
+    callback.assert_any_call(2, {'b': PARAMETERS['b']})
 
 
 
@@ -71,19 +55,24 @@ async def test_monitor_removed_callback_one(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
     callback_a1 = asynctest.Mock()
-    monitor.add(1, 'a', callback_a1)
-
     callback_b2 = asynctest.Mock()
-    monitor.add(2, 'b', callback_b2)
+    monitor.add_callback(callback_a1)
+    monitor.add_callback(callback_b2)
+
+    monitor.add(1, 'a')
+    monitor.add(2, 'b')
 
     await monitor.run_once()
 
     callback_a1.assert_called_once_with(1, {'a': PARAMETERS['a']})
-    callback_b2.assert_not_called()
+    callback_b2.assert_called_once_with(1, {'a': PARAMETERS['a']})
 
-    monitor.remove(callback_b2)
+    monitor.del_callback(callback_b2)
+    callback_a1.reset_mock()
+    callback_b2.reset_mock()
 
     await monitor.run_once()
+    callback_a1.assert_called_once_with(2, {'b': PARAMETERS['b']})
     callback_b2.assert_not_called()
 
 
@@ -92,13 +81,15 @@ async def test_monitor_removed_callback_all(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
     callback_a1 = asynctest.Mock()
-    monitor.add(1, 'a', callback_a1)
-
     callback_a2 = asynctest.Mock()
-    monitor.add(1, 'a', callback_a2)
+    monitor.add_callback(callback_a1)
+    monitor.add_callback(callback_a2)
 
-    monitor.remove(callback_a1)
-    monitor.remove(callback_a2)
+    monitor.add(1, 'a')
+    monitor.remove(1, 'a')
+
+    monitor.del_callback(callback_a1)
+    monitor.del_callback(callback_a2)
 
     await monitor.run_once()
 
