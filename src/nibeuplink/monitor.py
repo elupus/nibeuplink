@@ -1,28 +1,31 @@
 """Helpers to monitor state."""
 import asyncio
 import logging
-from typing import Callable
+from typing import Callable, Dict, Tuple, List
 
 from .const import MAX_REQUEST_PARAMETERS
 from .utils import cyclic_tuple
-from .typing import ParameterSet
+from .typing import ParameterSet, SystemId, ParameterId, Parameter
+from .uplink import Uplink
 
 _LOGGER = logging.getLogger(__name__)
 
+Callback = Callable[[SystemId, ParameterSet], None]
+
 class Monitor():
     def __init__(self,
-                 uplink: 'Uplink',
+                 uplink: Uplink,
                  chunks: int = MAX_REQUEST_PARAMETERS):
         self._uplink = uplink
-        self._callbacks = {}
+        self._callbacks = {}  # type: Dict[Tuple[SystemId, ParameterId], List[Callback]]
         self._iterator = cyclic_tuple(self._callbacks, chunks)
 
-    def add(self, system_id: int, parameter_id: str, callback: Callable[[ParameterSet], None]):
+    def add(self, system_id: SystemId, parameter_id: ParameterId, callback: Callback):
         key = (system_id, parameter_id)
         self._callbacks.setdefault(
             key, []).append(callback)
 
-    def remove(self, callback: Callable[[ParameterSet], None]):
+    def remove(self, callback: Callback):
         to_remove = []
         for key, value in self._callbacks.items():
             if callback in value:
@@ -33,9 +36,9 @@ class Monitor():
         for key in to_remove:
             del self._callbacks[key]
 
-    def call_callbacks(self, system_id, parameters):
-        parameter_set = {}
-        callbacks = []
+    def call_callbacks(self, system_id: SystemId, parameters: List[Parameter]):
+        parameter_set = {} #  type: ParameterSet
+        callbacks = []  #  type: List[Callback]
 
         for parameter in parameters:
             if not parameter:
