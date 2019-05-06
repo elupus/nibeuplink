@@ -53,6 +53,7 @@ class Monitor():
         if not system_id:
             return
 
+        _LOGGER.debug("Requesting: %s %s", system_id, parameter_ids)
         parameters = await asyncio.gather(*[
             self._uplink.get_parameter(system_id, parameter_id)
             for parameter_id in parameter_ids
