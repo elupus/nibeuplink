@@ -1,6 +1,21 @@
 from nibeuplink.utils import cyclic_tuple
 import pytest
 
+def test_cyclic_filled():
+    data = [
+        (1, 'a'),
+        (1, 'b'),
+        (1, 'c'),
+        (1, 'd'),
+    ]
+
+    cyclic = cyclic_tuple(data, 3)
+    assert next(cyclic) == (1, {'a', 'b', 'c'})
+    assert next(cyclic) == (1, {'d', 'a', 'b'})
+    assert next(cyclic) == (1, {'c', 'd', 'a'})
+    assert next(cyclic) == (1, {'b', 'c', 'd'})
+    assert next(cyclic) == (1, {'a', 'b', 'c'})
+
 def test_cyclic_tuple():
     data = {
         (1, 'a'): None,
