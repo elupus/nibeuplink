@@ -4,7 +4,7 @@ from typing import Iterable, Tuple, Any
 from collections import deque
 
 def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
-                   step: int):
+                 step: int):
     """Chunked cyclic iterator over a data set.
 
     Data will be returned in chunks up to `step`
@@ -18,14 +18,11 @@ def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
     """
     pending = deque()
 
-    def postpone(pairs):
-        for pair in pairs:
+    def postpone(pair):
+        if pair in pending:
             pending.remove(pair)
 
     while True:
-        if len(pending) < len(data):
-            pending.extend(data)
-
         if pending:
             curr = pending.popleft()
         else:
@@ -47,6 +44,10 @@ def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
 
         pending.extendleft(reversed(keep))
         postponed = yield curr[0], grab
+
+        if len(pending) < len(data):
+            pending.extend(data)
+
         if postponed:
             postpone(postponed)
             yield
