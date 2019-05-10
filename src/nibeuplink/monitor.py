@@ -22,6 +22,9 @@ class Monitor():
         self._parameters = defaultdict(int)  # type: Dict[Tuple[SystemId, ParameterId], int]
         self._iterator = cyclic_tuple(self._parameters.keys(), chunks)
 
+        # start iterator up, empty list will yield empty
+        next(self._iterator)
+
     def add_callback(self, callback):
         self._callbacks.append(callback)
 
@@ -37,6 +40,9 @@ class Monitor():
         self._parameters[key] -= 1
         if not self._parameters[key]:
             del self._parameters[key]
+
+    def postpone(self, system_id: SystemId, parameters: ParameterSet):
+        self._iterator.send((system_id, parameters))
 
     def call_callbacks(self, system_id: SystemId, parameters: List[Parameter]):
         parameter_set = {} #  type: ParameterSet

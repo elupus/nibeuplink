@@ -47,5 +47,5 @@ def test_cyclic_all_aligned():
 def test_cyclic_empty():
     data = {}
     cyclic = cyclic_tuple(data.keys(), 3)
-    assert next(cyclic) == (None, None)
-    assert next(cyclic) == (None, None)
+    assert next(cyclic) == (None, {None})
+    assert next(cyclic) == (None, {None})

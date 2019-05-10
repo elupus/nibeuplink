@@ -17,18 +17,22 @@ def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
     already returned value, peeking will be stopped
     """
     pending = deque()
+
+    def postpone(pairs):
+        for pair in pairs:
+            pending.remove(pair)
+
     while True:
         if len(pending) < len(data):
             pending.extend(data)
 
-        if not pending:
-            yield None, None
-            continue
+        if pending:
+            curr = pending.popleft()
+        else:
+            curr = (None, None)
 
-        curr = pending.popleft()
         keep = []
-        grab = set()
-        grab.add(curr[1])
+        grab = {curr[1]}
         while pending:
             val = pending.popleft()
             if curr[0] == val[0]:
@@ -40,8 +44,12 @@ def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
                 keep.append(val)
             if len(grab) >= step:
                 break
+
         pending.extendleft(reversed(keep))
-        yield curr[0], grab
+        postponed = yield curr[0], grab
+        if postponed:
+            postpone(postponed)
+            yield
 
 
 def chunks(data, SIZE):
