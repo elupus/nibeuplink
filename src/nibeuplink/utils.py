@@ -1,6 +1,6 @@
 """Utilities for component."""
 from itertools import islice
-from typing import Iterable, Tuple, Any
+from typing import Iterable, Tuple, Any, Deque
 from collections import deque
 
 def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
@@ -16,7 +16,7 @@ def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
     If `step` values are not found before hitting
     already returned value, peeking will be stopped
     """
-    pending = deque()
+    pending = deque()  # type: Deque[Tuple[Any, Any]]
 
     def postpone(pair):
         if pair in pending:

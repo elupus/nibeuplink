@@ -338,13 +338,13 @@ class Uplink():
             }
         }
 
-        data = await self._request(
+        result = await self._request(
             self.session.put,
             '{}/api/v1/systems/{}/parameters'.format(self.base, system_id),
             json    = data,
             headers = headers,
         )
-        return data[0]['status']
+        return result[0]['status']
 
     async def get_system(self, system_id: int):
         _LOGGER.debug("Requesting system {}".format(system_id))
