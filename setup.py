@@ -15,6 +15,9 @@ setup(
     license='MIT',
     packages=find_packages('src'),
     package_dir = {'': 'src'},
+    package_data = {
+        'nibeuplink': ['py.typed'],
+    },
     python_requires='>3.5',
     author='Joakim Plate',
     install_requires=[

@@ -6,6 +6,10 @@ from typing import (
 
 import attr
 
+from .typing import (
+    ParameterId
+)
+
 @attr.s
 class Parameter(object):
     parameterId = attr.ib()
@@ -47,52 +51,52 @@ class SetThermostatModel(object):
 
 @attr.s
 class ClimateSystem(object):
-    name = attr.ib()
-    return_temp = attr.ib()                 # BT3
-    supply_temp = attr.ib()                 # BT2
-    calc_supply_temp_heat = attr.ib()       # CSTH
-    offset_cool = attr.ib()                 # OC
-    room_temp = attr.ib()                   # BT50
-    room_setpoint_heat = attr.ib()          # RSH
-    room_setpoint_cool = attr.ib()          # RSC
-    use_room_sensor = attr.ib()             # URS
-    active_accessory = attr.ib()            # AA
-    external_adjustment_active = attr.ib()  # EAA
-    calc_supply_temp_cool = attr.ib()       # CSTC
-    offset_heat = attr.ib()                 # OH
-    heat_curve = attr.ib()                  # HC
-    min_supply = attr.ib()                  # MIS
-    max_supply = attr.ib()                  # MAS
-    extra_heat_pump = attr.ib()              # EHP
+    name = attr.ib(type=str)
+    return_temp = attr.ib(type=ParameterId)                 # BT3
+    supply_temp = attr.ib(type=ParameterId)                 # BT2
+    calc_supply_temp_heat = attr.ib(type=ParameterId)       # CSTH
+    offset_cool = attr.ib(type=ParameterId)                 # OC
+    room_temp = attr.ib(type=ParameterId)                   # BT50
+    room_setpoint_heat = attr.ib(type=ParameterId)          # RSH
+    room_setpoint_cool = attr.ib(type=ParameterId)          # RSC
+    use_room_sensor = attr.ib(type=ParameterId)             # URS
+    active_accessory = attr.ib(type=ParameterId)            # AA
+    external_adjustment_active = attr.ib(type=ParameterId)  # EAA
+    calc_supply_temp_cool = attr.ib(type=ParameterId)       # CSTC
+    offset_heat = attr.ib(type=ParameterId)                 # OH
+    heat_curve = attr.ib(type=ParameterId)                  # HC
+    min_supply = attr.ib(type=ParameterId)                  # MIS
+    max_supply = attr.ib(type=ParameterId)                  # MAS
+    extra_heat_pump = attr.ib(type=ParameterId)              # EHP
 
 
 @attr.s
 class HotWaterSystem(object):
-    name = attr.ib()
-    hot_water_charging = attr.ib()            # BT6
-    hot_water_top = attr.ib()                 # BT7
-    hot_water_comfort_mode = attr.ib()
-    hot_water_production = attr.ib()          # Active or not
-    periodic_hot_water = attr.ib()
-    stop_temperature_water_normal = attr.ib()
-    start_temperature_water_normal = attr.ib()
-    stop_temperature_water_luxary = attr.ib()
-    start_temperature_water_luxary = attr.ib()
-    stop_temperature_water_economy = attr.ib()
-    start_temperature_water_economy = attr.ib()
-    total_hot_water_compressor_time = attr.ib()
-    hot_water_boost = attr.ib()
+    name = attr.ib(type=str)
+    hot_water_charging = attr.ib(type=ParameterId)            # BT6
+    hot_water_top = attr.ib(type=ParameterId)                 # BT7
+    hot_water_comfort_mode = attr.ib(type=ParameterId)
+    hot_water_production = attr.ib(type=ParameterId)          # Active or not
+    periodic_hot_water = attr.ib(type=ParameterId)
+    stop_temperature_water_normal = attr.ib(type=ParameterId)
+    start_temperature_water_normal = attr.ib(type=ParameterId)
+    stop_temperature_water_luxary = attr.ib(type=ParameterId)
+    start_temperature_water_luxary = attr.ib(type=ParameterId)
+    stop_temperature_water_economy = attr.ib(type=ParameterId)
+    start_temperature_water_economy = attr.ib(type=ParameterId)
+    total_hot_water_compressor_time = attr.ib(type=ParameterId)
+    hot_water_boost = attr.ib(type=ParameterId)
 
 
 @attr.s
 class VentilationSystem(object):
-    name = attr.ib()
-    fan_speed = attr.ib()
-    exhaust_air = attr.ib()  # BT20
-    extract_air = attr.ib()  # BT21
-    exhaust_speed_normal = attr.ib()
-    exhaust_speed_1 = attr.ib()
-    exhaust_speed_2 = attr.ib()
-    exhaust_speed_3 = attr.ib()
-    exhaust_speed_4 = attr.ib()
-    ventilation_boost = attr.ib()
+    name = attr.ib(type=str)
+    fan_speed = attr.ib(type=ParameterId)
+    exhaust_air = attr.ib(type=ParameterId)  # BT20
+    extract_air = attr.ib(type=ParameterId)  # BT21
+    exhaust_speed_normal = attr.ib(type=ParameterId)
+    exhaust_speed_1 = attr.ib(type=ParameterId)
+    exhaust_speed_2 = attr.ib(type=ParameterId)
+    exhaust_speed_3 = attr.ib(type=ParameterId)
+    exhaust_speed_4 = attr.ib(type=ParameterId)
+    ventilation_boost = attr.ib(type=ParameterId)
