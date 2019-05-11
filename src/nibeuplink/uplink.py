@@ -13,7 +13,8 @@ from urllib.parse import urlencode, urlsplit, parse_qs
 from .exceptions import UplinkResponseException, UplinkException
 from .utils import chunks, chunk_pop
 from .typing import (
-    StatusItemIcon
+    StatusItemIcon,
+    ParameterId,
 )
 from .types import (
     Thermostat,
@@ -261,7 +262,7 @@ class Uplink():
         finally:
             response.close()
 
-    async def get_parameter_raw(self, system_id: int, parameter_id: str):
+    async def get_parameter_raw(self, system_id: int, parameter_id: ParameterId):
 
         request = ParameterRequest(str(parameter_id))
         if system_id not in self.requests:
@@ -320,12 +321,12 @@ class Uplink():
             else:
                 data['value'] = data['displayValue']
 
-    async def get_parameter(self, system_id: int, parameter_id: str):
+    async def get_parameter(self, system_id: int, parameter_id: ParameterId):
         data = await self.get_parameter_raw(system_id, parameter_id)
         self.add_parameter_extensions(data)
         return data
 
-    async def put_parameter(self, system_id: int, parameter_id: str, value: Any):
+    async def put_parameter(self, system_id: int, parameter_id: ParameterId, value: Any):
         headers = {
             'Accept'      : 'application/json',
             'Content-Type': 'application/json;charset=UTF-8'
