@@ -18,16 +18,16 @@ def test_cyclic_filled():
     assert next(cyclic) == (1, {'a', 'b', 'c'})
 
 def test_cyclic_tuple():
-    data = {
-        (1, 'a'): None,
-        (1, 'b'): None,
-        (2, 'a'): None,
-        (1, 'c'): None,
-        (2, 'b'): None,
-        (1, 'd'): None,
-    }
+    data = [
+        (1, 'a'),
+        (1, 'b'),
+        (2, 'a'),
+        (1, 'c'),
+        (2, 'b'),
+        (1, 'd'),
+    ]
 
-    cyclic = cyclic_tuple(data.keys(), 3)
+    cyclic = cyclic_tuple(data, 3)
     next(cyclic)
     assert next(cyclic) == (1, {'a', 'b', 'c'})
     assert next(cyclic) == (2, {'a', 'b'})
@@ -36,20 +36,20 @@ def test_cyclic_tuple():
 
 
 def test_cyclic_all_aligned():
-    data = {
-        (1, 'a'): None,
-        (1, 'b'): None,
-        (1, 'c'): None,
-    }
+    data = [
+        (1, 'a'),
+        (1, 'b'),
+        (1, 'c'),
+    ]
 
-    cyclic = cyclic_tuple(data.keys(), 3)
+    cyclic = cyclic_tuple(data, 3)
     next(cyclic)
     assert next(cyclic) == (1, {'a', 'b', 'c'})
     assert next(cyclic) == (1, {'a', 'b', 'c'})
 
 def test_cyclic_empty():
-    data = {}
-    cyclic = cyclic_tuple(data.keys(), 3)
+    data = []
+    cyclic = cyclic_tuple(data, 3)
     next(cyclic)
     assert next(cyclic) == (None, {None})
     assert next(cyclic) == (None, {None})
