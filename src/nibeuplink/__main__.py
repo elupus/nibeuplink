@@ -34,6 +34,7 @@ parser.add_argument('--alarms', action='store_true')
 parser.add_argument('--info', action='store_true')
 parser.add_argument('--unit', type=int, default=0)
 parser.add_argument('--unit_status', action='store_true')
+parser.add_argument('--subsystems', action='store_true')
 parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--smarthome_mode', action='store_true')
 parser.add_argument('--put_smarthome_mode', type=str)
@@ -134,14 +135,24 @@ async def run():
             if args.post_smarthome_thermostats:
                 todo.extend([uplink.post_smarthome_thermostats(args.system, args.post_smarthome_thermostats)])
 
+            if args.subsystems:
+                async def named(coroutine):
+                    data = await coroutine
+                    return [x.name for x in data.values()]
+                todo.extend([
+                    named(nibeuplink.get_active_climate(uplink, args.system)),
+                    named(nibeuplink.get_active_hotwater(uplink, args.system)),
+                    named(nibeuplink.get_active_ventilations(uplink, args.system)),
+                ])
+
             if not len(todo):
                 todo.extend([uplink.get_system(args.system)])
 
         res = await asyncio.gather(*todo)
         for a in res:
-            if isinstance(a, dict):
+            try:
                 print(json.dumps(a, indent=1))
-            else:
+            except TypeError:
                 print(a)
 
 def main():
