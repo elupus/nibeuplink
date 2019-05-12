@@ -18,7 +18,7 @@ async def uplink_mock(loop):
         return PARAMETERS[parameter_id]
 
     uplink.get_parameter.side_effect = get_parameter
-    yield uplink
+    return uplink
 
 @pytest.mark.asyncio
 async def test_monitor_1(uplink_mock):
