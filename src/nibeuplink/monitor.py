@@ -1,7 +1,7 @@
 """Helpers to monitor state."""
 import asyncio
 import logging
-from collections import defaultdict
+from collections import OrderedDict
 from typing import Callable, Dict, Tuple, List
 
 from .const import MAX_REQUEST_PARAMETERS
@@ -19,7 +19,7 @@ class Monitor():
                  chunks: int = MAX_REQUEST_PARAMETERS):
         self._uplink = uplink
         self._callbacks = []  # type: List[Callback]
-        self._parameters = defaultdict(int)  # type: Dict[Tuple[SystemId, ParameterId], int]
+        self._parameters = OrderedDict()  # type: Dict[Tuple[SystemId, ParameterId], int]
         self._iterator = cyclic_tuple(self._parameters.keys(), chunks)
 
         # start iterator up, empty list will yield empty
@@ -33,7 +33,11 @@ class Monitor():
 
     def add(self, system_id: SystemId, parameter_id: ParameterId):
         key = (system_id, parameter_id)
-        self._parameters[key] += 1
+        if key in self._parameters:
+            self._parameters[key] += 1
+        else:
+            self._parameters[key] = 1
+
 
     def remove(self, system_id: SystemId, parameter_id: ParameterId):
         key = (system_id, parameter_id)
