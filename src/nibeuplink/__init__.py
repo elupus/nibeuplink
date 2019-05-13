@@ -37,7 +37,7 @@ async def get_active_climate(uplink: Uplink, system_id: int) -> Dict[str, Climat
             system_id,
             value.active_accessory)
 
-        _LOGGER.error("Climate %s:%s active_accessory: %s", system_id, key, available)
+        _LOGGER.debug("Climate %s:%s active_accessory: %s", system_id, key, available)
         if available and available['rawValue'] == 1:
             active[key] = value
 
@@ -59,7 +59,7 @@ async def get_active_hotwater(uplink: Uplink, system_id: int) -> Dict[str, HotWa
             system_id,
             value.hot_water_production)
 
-        _LOGGER.error("Hotwater %s:%s hot_water_production: %s", system_id, key, available)
+        _LOGGER.debug("Hotwater %s:%s hot_water_production: %s", system_id, key, available)
         if available and available['rawValue'] == 1:
             active[key] = value
 
@@ -78,7 +78,7 @@ async def get_active_ventilations(uplink: Uplink, system_id: int) -> Dict[str, V
             system_id,
             value.fan_speed)
 
-        _LOGGER.error("Ventilation %s:%s fan_speed: %s", system_id, key, available)
+        _LOGGER.debug("Ventilation %s:%s fan_speed: %s", system_id, key, available)
         if available and available['rawValue'] != -32768:
             active[key] = value
 
