@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Dict
 
 from .const import (
     MAX_REQUEST_PARAMETERS,
@@ -26,7 +27,7 @@ from .uplink import Uplink
 
 _LOGGER = logging.getLogger(__name__)
 
-async def get_active_climate(uplink, system_id):
+async def get_active_climate(uplink: Uplink, system_id: int) -> Dict[str, ClimateSystem]:
     active = {}
     async def check(key: str, value: ClimateSystem):
         if value.active_accessory is None:
@@ -48,7 +49,7 @@ async def get_active_climate(uplink, system_id):
     return active
 
 
-async def get_active_hotwater(uplink, system_id):
+async def get_active_hotwater(uplink: Uplink, system_id: int) -> Dict[str, HotWaterSystem]:
     active = {}
     async def check(key: str, value: HotWaterSystem):
         if value.hot_water_production is None:
@@ -70,7 +71,7 @@ async def get_active_hotwater(uplink, system_id):
     return active
 
 
-async def get_active_ventilations(uplink, system_id):
+async def get_active_ventilations(uplink: Uplink, system_id: int) -> Dict[str, VentilationSystem]:
     active = {}
     async def check(key: str, value: VentilationSystem):
         available = await uplink.get_parameter(
