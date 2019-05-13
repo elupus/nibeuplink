@@ -189,15 +189,17 @@ class Uplink():
             await raise_for_status(response)
             self._handle_access_token(await response.json())
 
-    def get_authorize_url(self):
-        self.state = uuid.uuid4().hex
+    def get_authorize_url(self, state=None):
+        if not state:
+            state = uuid.uuid4().hex
+        self.state = state
 
         params = {
             'response_type' : 'code',
             'client_id'     : self.client_id,
             'redirect_uri'  : self.redirect_uri,
             'scope'         : ' '.join(self.scope),
-            'state'         : self.state,
+            'state'         : state,
         }
 
         return '{}/oauth/authorize?{}'.format(self.base, urlencode(params))
