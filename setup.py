@@ -25,6 +25,7 @@ setup(
         'aiohttp',
         'attrs>18.1',
         'cattrs',
+        'typing_extensions'
     ],
     extras_require={
         'tests': [

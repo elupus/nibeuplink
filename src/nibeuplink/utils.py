@@ -1,6 +1,7 @@
 """Utilities for component."""
 from itertools import islice
-from typing import Iterable, Tuple, Any, Deque
+from typing import Iterable, Tuple, Any
+from typing_extensions import Deque
 from collections import deque
 
 def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
