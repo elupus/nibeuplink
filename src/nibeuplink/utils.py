@@ -1,10 +1,13 @@
 """Utilities for component."""
 from itertools import islice
-from typing import Iterable, Tuple, Any
-from typing_extensions import Deque
+from typing import Iterable, Tuple, Any, Sized
+from typing_extensions import Deque, Protocol
 from collections import deque
 
-def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
+class SizedIterator(Sized, Iterable[Tuple[Any, Any]], Protocol):
+    pass
+
+def cyclic_tuple(data: SizedIterator,
                  step: int):
     """Chunked cyclic iterator over a data set.
 
