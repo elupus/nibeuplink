@@ -16,21 +16,12 @@ DEFAULT_CODE = "789"
 DEFAULT_SYSTEMID = 123456
 
 
-def fin_async(loop, coro):
-    def fun():
-        loop.run_until_complete(coro())
-
-    return fun
-
-
 @pytest.fixture
 async def default_uplink(loop, request):
     def access_write(data):
         pass
 
     server = fake_uplink.Uplink(loop)
-
-    request.addfinalizer(fin_async(loop, server.stop))
 
     await server.start()
 
@@ -43,12 +34,9 @@ async def default_uplink(loop, request):
         scope=DEFAULT_SCOPE,
         base=server.base,
     )
-
-    request.addfinalizer(fin_async(loop, uplink.close))
-
     # Override the default throttling to 0 to speed up tests
     uplink.THROTTLE = timedelta(seconds=0)
-    return uplink, server
+    yield uplink, server
 
 
 @pytest.fixture
