@@ -4,7 +4,6 @@ import cattr
 import logging
 import asyncio
 import aiohttp
-import uuid
 from datetime import datetime, timedelta
 from typing import List, Optional, Any
 
@@ -23,33 +22,6 @@ from .types import (
 from .const import MAX_REQUEST_PARAMETERS
 
 _LOGGER = logging.getLogger(__name__)
-
-
-async def raise_for_status(response):
-    if 400 <= response.status:
-        e = aiohttp.ClientResponseError(
-            response.request_info,
-            response.history,
-            code=response.status,
-            headers=response.headers,
-        )
-
-        if "json" in response.headers.get("CONTENT-TYPE", ""):
-            data = await response.json()
-            e.message = str(data)
-            raise UplinkResponseException(data.get("errorCode"), data) from e
-
-        else:
-            data = await response.text()
-            raise UplinkException(data) from e
-
-
-class BearerAuth(aiohttp.BasicAuth):
-    def __init__(self, access_token):
-        self.access_token = access_token
-
-    def encode(self):
-        return "Bearer {}".format(self.access_token)
 
 
 class ParameterRequest:
@@ -86,183 +58,37 @@ class Throttle:
 
 class Uplink:
     def __init__(
-        self,
-        client_id,
-        client_secret,
-        redirect_uri,
-        access_data=None,
-        access_data_write=None,
-        scope=["READSYSTEM"],
-        loop=None,
-        base="https://api.nibeuplink.com",
-        throttle=4.5,
+        self, session, loop=None, base="https://api.nibeuplink.com", throttle=4.5
     ):
 
-        self.redirect_uri = redirect_uri
-        self.client_id = client_id
-        self.access_data_write = access_data_write
         self.state = None
-        self.scope = scope
         self.lock = asyncio.Lock()
         self.throttle = Throttle(timedelta(seconds=throttle))
-        self.session = None
+        self.session = session
         self.loop = loop
         self.base = base
-        self.access_data = None
-
-        # check that the access scope is enough, otherwise ignore
-        if access_data:
-            if set(scope).issubset(set(access_data["scope"].split(" "))):
-                self.access_data = access_data
-            else:
-                _LOGGER.info(
-                    "Ignoring access data due to changed scope {}".format(scope)
-                )
-
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        }
-
-        self.session = aiohttp.ClientSession(
-            headers=headers, auth=aiohttp.BasicAuth(client_id, client_secret)
-        )
         self.requests = {}
 
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
+        pass
 
-    async def close(self):
-        if self.session:
-            await self.session.close()
-            self.session = None
-
-    def _handle_access_token(self, data):
-        if "access_token" not in data:
-            raise ValueError("Error in reply {}".format(data))
-
-        if "expires_in" in data:
-            _LOGGER.debug("Token will expire in %s seconds", data["expires_in"])
-            expires = datetime.now() + timedelta(seconds=data["expires_in"])
-        else:
-            expires = None
-
-        data["access_token_expires"] = expires.isoformat()
-
-        self.access_data = data
-        if self.access_data_write:
-            self.access_data_write(data)
-
-    async def _get_auth(self):
-        if self.access_data:
-            return BearerAuth(self.access_data["access_token"])
-        else:
-            return None
-
-    async def get_access_token(self, code):
-        payload = {
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": self.redirect_uri,
-        }
-
-        async with self.session.post(
-            "{}/oauth/token".format(self.base), data=payload
-        ) as response:
-            await raise_for_status(response)
-            self._handle_access_token(await response.json())
-
-    async def refresh_access_token(self):
-        if not self.access_data or "refresh_token" not in self.access_data:
-            _LOGGER.warning("No refresh token available for refresh")
-            return
-
-        _LOGGER.debug(
-            "Refreshing access token with refresh token %s",
-            self.access_data["refresh_token"],
+    async def get(self, url, *args, **kwargs):
+        return await self.session.request(
+            "GET", f"{self.base}/api/v1/{url}", *args, **kwargs
         )
-        payload = {
-            "grant_type": "refresh_token",
-            "refresh_token": self.access_data["refresh_token"],
-        }
 
-        async with self.session.post(
-            "{}/oauth/token".format(self.base), data=payload
-        ) as response:
-            await raise_for_status(response)
-            self._handle_access_token(await response.json())
+    async def put(self, url, *args, **kwargs):
+        return await self.session.request(
+            "PUT", f"{self.base}/api/v1/{url}", *args, **kwargs
+        )
 
-    def get_authorize_url(self, state=None):
-        if not state:
-            state = uuid.uuid4().hex
-        self.state = state
-
-        params = {
-            "response_type": "code",
-            "client_id": self.client_id,
-            "redirect_uri": self.redirect_uri,
-            "scope": " ".join(self.scope),
-            "state": state,
-        }
-
-        return "{}/oauth/authorize?{}".format(self.base, urlencode(params))
-
-    def get_code_from_url(self, url):
-        query = parse_qs(urlsplit(url).query)
-        if "state" in query and query["state"][0] != self.state:
-            raise ValueError(
-                "Invalid state in url {} expected {}".format(query["state"], self.state)
-            )
-        return query["code"][0]
-
-    async def get(self, url, params={}):
-        async with self.lock:
-            async with self.throttle:
-                return await self._request(
-                    self.session.get,
-                    "{}/api/v1/{}".format(self.base, url),
-                    params=params,
-                    headers={},
-                )
-
-    async def put(self, url, **kwargs):
-        async with self.lock:
-            async with self.throttle:
-                return await self._request(
-                    self.session.put, "{}/api/v1/{}".format(self.base, url), **kwargs
-                )
-
-    async def post(self, url, **kwargs):
-        async with self.lock:
-            async with self.throttle:
-                return await self._request(
-                    self.session.post, "{}/api/v1/{}".format(self.base, url), **kwargs
-                )
-
-    async def _request(self, fun, *args, **kw):
-        response = await fun(*args, auth=await self._get_auth(), **kw)
-        try:
-            if response.status == 401:
-                _LOGGER.debug(response)
-                _LOGGER.info("Attempting to refresh token due to error in request")
-                await self.refresh_access_token()
-                response.close()
-                response = await fun(*args, auth=await self._get_auth(), **kw)
-
-            await raise_for_status(response)
-
-            if "json" in response.headers.get("CONTENT-TYPE", ""):
-                data = await response.json()
-            else:
-                data = await response.text()
-
-            return data
-
-        finally:
-            response.close()
+    async def post(self, url, *args, **kwargs):
+        return await self.session.request(
+            "POST", f"{self.base}/api/v1/{url}", *args, **kwargs
+        )
 
     async def get_parameter_raw(self, system_id: int, parameter_id: ParameterId):
 
@@ -296,9 +122,8 @@ class Uplink:
                         )
                     )
 
-                    data = await self._request(
-                        self.session.get,
-                        "{}/api/v1/systems/{}/parameters".format(self.base, system_id),
+                    data = await self.get(
+                        f"systems/{system_id}/parameters",
                         params=[
                             ("parameterIds", str(x.parameter_id)) for x in requests
                         ],
@@ -344,23 +169,22 @@ class Uplink:
         }
 
         data = {"settings": {str(parameter_id): value}}
-
-        result = await self._request(
-            self.session.put,
-            "{}/api/v1/systems/{}/parameters".format(self.base, system_id),
-            json=data,
-            headers=headers,
-        )
+        async with self.lock, self.throttle:
+            result = await self.put(
+                f"systems/{system_id}/parameters", json=data, headers=headers,
+            )
         return result[0]["status"]
 
     async def get_system(self, system_id: int):
         _LOGGER.debug("Requesting system {}".format(system_id))
-        return await self.get("systems/{}".format(system_id))
+        async with self.lock, self.throttle:
+            return await self.get(f"systems/{system_id}")
 
     async def get_systems(self):
         _LOGGER.debug("Requesting systems")
-        data = await self.get("systems")
-        return data["objects"]
+        async with self.lock, self.throttle:
+            data = await self.get("systems")
+            return data["objects"]
 
     async def get_category_raw(
         self, system_id: int, category_id: str, unit_id: int = 0
@@ -368,10 +192,11 @@ class Uplink:
         _LOGGER.debug(
             "Requesting category {} on system {}".format(category_id, system_id)
         )
-        return await self.get(
-            "systems/{}/serviceinfo/categories/{}".format(system_id, category_id),
-            {"systemUnitId": unit_id},
-        )
+        async with self.lock, self.throttle:
+            return await self.get(
+                f"systems/{system_id}/serviceinfo/categories/{category_id}",
+                {"systemUnitId": unit_id},
+            )
 
     async def get_category(self, system_id: int, category_id: str, unit_id: int = 0):
         data = await self.get_category_raw(system_id, category_id, unit_id)
@@ -382,10 +207,11 @@ class Uplink:
     async def get_categories(self, system_id: int, parameters: bool, unit_id: int = 0):
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
-        data = await self.get(
-            "systems/{}/serviceinfo/categories".format(system_id),
-            {"parameters": str(parameters), "systemUnitId": unit_id},
-        )
+        async with self.lock, self.throttle:
+            data = await self.get(
+                f"systems/{system_id}/serviceinfo/categories",
+                {"parameters": str(parameters), "systemUnitId": unit_id},
+            )
         for category in data:
             if category["parameters"]:
                 for param in category["parameters"]:
@@ -394,7 +220,8 @@ class Uplink:
 
     async def get_status_raw(self, system_id: int):
         _LOGGER.debug("Requesting status on system {}".format(system_id))
-        return await self.get("systems/{}/status/system".format(system_id))
+        async with self.lock, self.throttle:
+            return await self.get(f"systems/{system_id}/status/system")
 
     async def get_status(self, system_id: int) -> List[StatusItemIcon]:
         data = await self.get_status_raw(system_id)
@@ -406,13 +233,13 @@ class Uplink:
 
     async def get_units(self, system_id: int):
         _LOGGER.debug("Requesting units on system {}".format(system_id))
-        return await self.get("systems/{}/units".format(system_id))
+        async with self.lock, self.throttle:
+            return await self.get(f"systems/{system_id}/units")
 
     async def get_unit_status(self, system_id: int, unit_id: int):
         _LOGGER.debug("Requesting unit {} on system {}".format(unit_id, system_id))
-        data = await self.get(
-            "systems/{}/status/systemUnit/{}".format(system_id, unit_id)
-        )
+        async with self.lock, self.throttle:
+            data = await self.get(f"systems/{system_id}/status/systemUnit/{unit_id}")
         for status in data:
             if status["parameters"]:
                 for param in status["parameters"]:
@@ -428,13 +255,13 @@ class Uplink:
             "itemsPerPage": 100,
             "type": notifiction_type,
         }
-        data = await self.get(
-            "systems/{}/notifications".format(system_id), params=params
-        )
+        async with self.lock, self.throttle:
+            data = await self.get(f"systems/{system_id}/notifications", params=params)
         return data["objects"]
 
     async def get_smarthome_mode(self, system_id: int) -> str:
-        data = await self.get("systems/{}/smarthome/mode".format(system_id))
+        async with self.lock, self.throttle:
+            data = await self.get(f"systems/{system_id}/smarthome/mode")
         mode = data["mode"]
         _LOGGER.debug("Get smarthome mode %s", mode)
         return mode
@@ -446,13 +273,15 @@ class Uplink:
         }
 
         data = {"mode": mode}
-        data = await self.put(
-            "systems/{}/smarthome/mode".format(system_id), json=data, headers=headers
-        )
+        async with self.lock, self.throttle:
+            data = await self.session.put(
+                f"systems/{system_id}/smarthome/mode", json=data, headers=headers,
+            )
         _LOGGER.debug("Set smarthome mode %s -> %s", mode, data)
 
     async def get_smarthome_thermostats(self, system_id: int) -> List[Thermostat]:
-        data = await self.get("systems/{}/smarthome/thermostats".format(system_id))
+        async with self.lock, self.throttle:
+            data = await self.get(f"systems/{system_id}/smarthome/thermostats")
         _LOGGER.debug("Get smarthome thermostats %s", data)
         return cattr.structure(data, List[Thermostat])
 
@@ -466,8 +295,7 @@ class Uplink:
 
         data = attr.asdict(thermostat)
         _LOGGER.debug("Post smarthome thermostat %s -> %s", thermostat, data)
-        await self.post(
-            "systems/{}/smarthome/thermostats".format(system_id),
-            json=data,
-            headers=headers,
-        )
+        async with self.lock, self.throttle:
+            await self.post(
+                f"{system_id}/smarthome/thermostats", json=data, headers=headers,
+            )

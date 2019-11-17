@@ -24,6 +24,7 @@ from .types import (
 
 from .monitor import Monitor
 from .uplink import Uplink
+from .session import UplinkSession
 
 _LOGGER = logging.getLogger(__name__)
 

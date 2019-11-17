@@ -15,17 +15,21 @@ DEFAULT_CODE = "789"
 
 DEFAULT_SYSTEMID = 123456
 
-
-@pytest.fixture
-async def default_uplink(loop, request):
-    def access_write(data):
-        pass
-
+@pytest.fixture(name="server")
+async def default_server(loop):
     server = fake_uplink.Uplink(loop)
 
     await server.start()
+    yield server
+    await server.stop()
 
-    uplink = nibeuplink.Uplink(
+
+@pytest.fixture(name="session")
+async def default_session(loop, request, server):
+    def access_write(data):
+        pass
+
+    session = nibeuplink.UplinkSession(
         DEFAULT_CLIENT_ID,
         DEFAULT_CLIENT_SECRET,
         server.redirect,
@@ -34,17 +38,28 @@ async def default_uplink(loop, request):
         scope=DEFAULT_SCOPE,
         base=server.base,
     )
-    # Override the default throttling to 0 to speed up tests
-    uplink.THROTTLE = timedelta(seconds=0)
-    yield uplink, server
+    yield session
+    await session.close()
+
+
+@pytest.fixture(name="uplink")
+async def default_uplink(loop, request, session, server):
+
+    uplink = nibeuplink.Uplink(
+        session=session,
+        base=server.base,
+        throttle=0,
+    )
+
+    yield uplink
 
 
 @pytest.fixture
-async def uplink_with_data(loop, default_uplink):
+async def uplink_with_data(loop, uplink, server, session):
 
-    default_uplink[1].add_system(DEFAULT_SYSTEMID)
+    server.add_system(DEFAULT_SYSTEMID)
 
-    default_uplink[1].add_parameter(
+    server.add_parameter(
         DEFAULT_SYSTEMID,
         {
             "parameterId": 100,
@@ -57,7 +72,7 @@ async def uplink_with_data(loop, default_uplink):
         },
     )
 
-    default_uplink[1].add_parameter(
+    server.add_parameter(
         DEFAULT_SYSTEMID,
         {
             "parameterId": 120,
@@ -70,7 +85,7 @@ async def uplink_with_data(loop, default_uplink):
         },
     )
 
-    default_uplink[1].add_parameter(
+    server.add_parameter(
         DEFAULT_SYSTEMID,
         {
             "parameterId": 120,
@@ -84,65 +99,65 @@ async def uplink_with_data(loop, default_uplink):
     )
 
     # Make sure we have a token
-    await default_uplink[0].get_access_token(DEFAULT_CODE)
+    await session.get_access_token(DEFAULT_CODE)
 
-    return default_uplink[0], default_uplink[1]
-
-
-async def test_status(default_uplink):
-    assert not default_uplink[0].access_data
+    return uplink
 
 
-async def test_get_authorize_url(default_uplink):
+async def test_status(session):
+    assert not session.access_data
+
+
+async def test_get_authorize_url(session, server):
     from urllib.parse import urlsplit, parse_qs
 
-    o = urlsplit(default_uplink[0].get_authorize_url())
+    o = urlsplit(session.get_authorize_url())
     q = parse_qs(o.query)
 
     assert q["response_type"] == ["code"]
     assert q["client_id"] == [DEFAULT_CLIENT_ID]
-    assert q["redirect_uri"] == [default_uplink[1].redirect]
+    assert q["redirect_uri"] == [server.redirect]
     assert q["scope"] == [" ".join(DEFAULT_SCOPE)]
 
 
-async def test_get_code_from_url(default_uplink):
+async def test_get_code_from_url(session, server):
     from urllib.parse import urlsplit, parse_qs
 
-    o = urlsplit(default_uplink[0].get_authorize_url())
+    o = urlsplit(session.get_authorize_url())
     q = parse_qs(o.query)
 
     # valid state
     url = "{}?state={}&code={}".format(
-        default_uplink[1].redirect, q["state"][0], DEFAULT_CODE
+        server.redirect, q["state"][0], DEFAULT_CODE
     )
-    assert DEFAULT_CODE == default_uplink[0].get_code_from_url(url)
+    assert DEFAULT_CODE == session.get_code_from_url(url)
 
     # no state
-    url = "{}?code={}".format(default_uplink[1].redirect, DEFAULT_CODE)
-    assert DEFAULT_CODE == default_uplink[0].get_code_from_url(url)
+    url = "{}?code={}".format(server.redirect, DEFAULT_CODE)
+    assert DEFAULT_CODE == session.get_code_from_url(url)
 
     # invalid state
-    url = "{}?state={}&code={}".format(default_uplink[1].redirect, "junk", DEFAULT_CODE)
+    url = "{}?state={}&code={}".format(server.redirect, "junk", DEFAULT_CODE)
     with pytest.raises(ValueError):
-        default_uplink[0].get_code_from_url(url)
+        session.get_code_from_url(url)
 
 
-async def test_get_get_access_token(default_uplink):
-    await default_uplink[0].get_access_token("code_sample")
+async def test_get_get_access_token(session):
+    await session.get_access_token("code_sample")
 
 
-async def test_auth_flow(default_uplink):
-    url = default_uplink[0].get_authorize_url()
-    redirect = await default_uplink[0].session.post(url, allow_redirects=False)
+async def test_auth_flow(session, server):
+    url = session.get_authorize_url()
+    redirect = await session.session.post(url, allow_redirects=False)
     assert redirect.status == 302
-    assert redirect.headers["Location"].startswith(default_uplink[1].redirect)
+    assert redirect.headers["Location"].startswith(server.redirect)
 
 
-async def test_notifications(default_uplink):
-    await default_uplink[0].get_access_token("goodcode")
+async def test_notifications(server, session, uplink):
+    await session.get_access_token("goodcode")
 
-    default_uplink[1].add_system(DEFAULT_SYSTEMID)
-    default_uplink[1].add_notification(
+    server.add_system(DEFAULT_SYSTEMID)
+    server.add_notification(
         DEFAULT_SYSTEMID,
         {
             "notificationId": 1,
@@ -203,52 +218,46 @@ async def test_notifications(default_uplink):
             ],
         },
     )
-    notifications = await default_uplink[0].get_notifications(DEFAULT_SYSTEMID)
+    notifications = await uplink.get_notifications(DEFAULT_SYSTEMID)
     assert notifications[0]["systemUnitId"] == 3
 
 
-async def test_token_refresh(uplink_with_data):
-    uplink = uplink_with_data[0]
-    server = uplink_with_data[1]
-    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
+async def test_token_refresh(server, uplink_with_data):
+    parameter = await uplink_with_data.get_parameter(DEFAULT_SYSTEMID, 100)
     assert parameter["displayValue"] == "100 Unit"
 
     on_oauth_token = server.requests["on_oauth_token"]
     server.expire_tokens()
 
-    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
+    parameter = await uplink_with_data.get_parameter(DEFAULT_SYSTEMID, 100)
     assert parameter["displayValue"] == "100 Unit"
     assert server.requests["on_oauth_token"] == on_oauth_token + 1
 
 
 async def test_get_parameter(uplink_with_data):
-    uplink = uplink_with_data[0]
 
-    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
+    parameter = await uplink_with_data.get_parameter(DEFAULT_SYSTEMID, 100)
 
     assert parameter["displayValue"] == "100 Unit"
 
-    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 120)
+    parameter = await uplink_with_data.get_parameter(DEFAULT_SYSTEMID, 120)
 
     assert parameter["displayValue"] == "120 Units"
 
-    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, "onehundredtwenty")
+    parameter = await uplink_with_data.get_parameter(DEFAULT_SYSTEMID, "onehundredtwenty")
 
     assert parameter["displayValue"] == "120 Units"
 
 
 async def test_put_parameter(uplink_with_data):
-    uplink = uplink_with_data[0]
-
-    status = await uplink.put_parameter(DEFAULT_SYSTEMID, 100, "hello")
+    status = await uplink_with_data.put_parameter(DEFAULT_SYSTEMID, 100, "hello")
 
     assert status == "DONE"
 
 
 async def test_parameters_unit(uplink_with_data):
-    uplink = uplink_with_data[0]
 
-    parameter = await uplink.get_parameter(DEFAULT_SYSTEMID, 100)
+    parameter = await uplink_with_data.get_parameter(DEFAULT_SYSTEMID, 100)
 
     assert parameter["displayValue"] == "100 Unit"
     assert parameter["unit"] == "Unit"
@@ -256,11 +265,9 @@ async def test_parameters_unit(uplink_with_data):
 
 
 @pytest.mark.parametrize("count", [1, 15, 16])
-async def test_parameters(default_uplink, count):
-    uplink = default_uplink[0]
-    server = default_uplink[1]
+async def test_parameters(session, uplink, server, count):
 
-    await uplink.get_access_token("goodcode")
+    await session.get_access_token("goodcode")
 
     server.add_system(DEFAULT_SYSTEMID)
     parameterids = range(100, 100 + count)
