@@ -75,6 +75,12 @@ class UplinkSession:
             headers=headers, auth=aiohttp.BasicAuth(client_id, client_secret)
         )
 
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+
     async def close(self):
         if self.session:
             await self.session.close()

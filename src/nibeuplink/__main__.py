@@ -81,20 +81,22 @@ async def run():
     if args.put_parameter or args.put_smarthome_mode:
         scope.append("WRITESYSTEM")
 
-    async with nibeuplink.Uplink(
+    async with nibeuplink.UplinkSession(
         client_id=args.client_id,
         client_secret=args.client_secret,
         redirect_uri=args.redirect_uri,
         access_data=token_read(),
         access_data_write=token_write,
         scope=scope,
-    ) as uplink:
+    ) as session:
 
-        if not uplink.access_data:
-            auth_uri = uplink.get_authorize_url()
+        if not session.access_data:
+            auth_uri = session.get_authorize_url()
             print(auth_uri)
             result = input("Enter full redirect url: ")
-            await uplink.get_access_token(uplink.get_code_from_url(result))
+            await session.get_access_token(session.get_code_from_url(result))
+
+        uplink = nibeuplink.Uplink(session)
 
         todo = []
         if not args.system:
