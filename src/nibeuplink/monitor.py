@@ -13,13 +13,14 @@ _LOGGER = logging.getLogger(__name__)
 
 Callback = Callable[[SystemId, ParameterSet], None]
 
-class Monitor():
-    def __init__(self,
-                 uplink: Uplink,
-                 chunks: int = MAX_REQUEST_PARAMETERS):
+
+class Monitor:
+    def __init__(self, uplink: Uplink, chunks: int = MAX_REQUEST_PARAMETERS):
         self._uplink = uplink
         self._callbacks = []  # type: List[Callback]
-        self._parameters = OrderedDict()  # type: Dict[Tuple[SystemId, ParameterId], int]
+        self._parameters = (
+            OrderedDict()
+        )  # type: Dict[Tuple[SystemId, ParameterId], int]
         self._iterator = cyclic_tuple(self._parameters.keys(), chunks)
 
         # start iterator up, empty list will yield empty
@@ -38,7 +39,6 @@ class Monitor():
         else:
             self._parameters[key] = 1
 
-
     def remove(self, system_id: SystemId, parameter_id: ParameterId):
         key = (system_id, parameter_id)
         self._parameters[key] -= 1
@@ -49,14 +49,14 @@ class Monitor():
         self._iterator.send((system_id, parameters))
 
     def call_callbacks(self, system_id: SystemId, parameters: List[Parameter]):
-        parameter_set = {} #  type: ParameterSet
+        parameter_set = {}  #  type: ParameterSet
 
         for parameter in parameters:
             if not parameter:
                 _LOGGER.debug("Parameter not found for system %s", system_id)
                 continue
 
-            parameter_set[parameter['name']] = parameter
+            parameter_set[parameter["name"]] = parameter
 
         for callback in self._callbacks:
             callback(system_id, parameter_set)
@@ -67,10 +67,12 @@ class Monitor():
             return
 
         _LOGGER.debug("Requesting: %s %s", system_id, parameter_ids)
-        parameters = await asyncio.gather(*[
-            self._uplink.get_parameter(system_id, parameter_id)
-            for parameter_id in parameter_ids
-        ])
+        parameters = await asyncio.gather(
+            *[
+                self._uplink.get_parameter(system_id, parameter_id)
+                for parameter_id in parameter_ids
+            ]
+        )
 
         self.call_callbacks(system_id, parameters)
 

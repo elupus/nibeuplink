@@ -6,9 +6,8 @@ from typing import (
 
 import attr
 
-from .typing import (
-    ParameterId
-)
+from .typing import ParameterId
+
 
 @attr.s
 class Parameter(object):
@@ -44,39 +43,40 @@ class Thermostat(object):
 class SetThermostatModel(object):
     externalId = attr.ib(type=int)
     name = attr.ib(type=str)
-    actualTemp = attr.ib(default=None, type=Optional[int]) # Multiplied by 10
-    targetTemp = attr.ib(default=None, type=Optional[int]) # Multiplied by 10
+    actualTemp = attr.ib(default=None, type=Optional[int])  # Multiplied by 10
+    targetTemp = attr.ib(default=None, type=Optional[int])  # Multiplied by 10
     valvePosition = attr.ib(default=None, type=Optional[int])
     climateSystems = attr.ib(default=None, type=Optional[List[int]])
+
 
 @attr.s
 class ClimateSystem(object):
     name = attr.ib(type=str)
-    return_temp = attr.ib(type=Optional[ParameterId])                 # BT3
-    supply_temp = attr.ib(type=Optional[ParameterId])                 # BT2
-    calc_supply_temp_heat = attr.ib(type=Optional[ParameterId])       # CSTH
-    offset_cool = attr.ib(type=Optional[ParameterId])                 # OC
-    room_temp = attr.ib(type=Optional[ParameterId])                   # BT50
-    room_setpoint_heat = attr.ib(type=Optional[ParameterId])          # RSH
-    room_setpoint_cool = attr.ib(type=Optional[ParameterId])          # RSC
-    use_room_sensor = attr.ib(type=Optional[ParameterId])             # URS
-    active_accessory = attr.ib(type=Optional[ParameterId])            # AA
+    return_temp = attr.ib(type=Optional[ParameterId])  # BT3
+    supply_temp = attr.ib(type=Optional[ParameterId])  # BT2
+    calc_supply_temp_heat = attr.ib(type=Optional[ParameterId])  # CSTH
+    offset_cool = attr.ib(type=Optional[ParameterId])  # OC
+    room_temp = attr.ib(type=Optional[ParameterId])  # BT50
+    room_setpoint_heat = attr.ib(type=Optional[ParameterId])  # RSH
+    room_setpoint_cool = attr.ib(type=Optional[ParameterId])  # RSC
+    use_room_sensor = attr.ib(type=Optional[ParameterId])  # URS
+    active_accessory = attr.ib(type=Optional[ParameterId])  # AA
     external_adjustment_active = attr.ib(type=Optional[ParameterId])  # EAA
-    calc_supply_temp_cool = attr.ib(type=Optional[ParameterId])       # CSTC
-    offset_heat = attr.ib(type=Optional[ParameterId])                 # OH
-    heat_curve = attr.ib(type=Optional[ParameterId])                  # HC
-    min_supply = attr.ib(type=Optional[ParameterId])                  # MIS
-    max_supply = attr.ib(type=Optional[ParameterId])                  # MAS
-    extra_heat_pump = attr.ib(type=Optional[ParameterId])              # EHP
+    calc_supply_temp_cool = attr.ib(type=Optional[ParameterId])  # CSTC
+    offset_heat = attr.ib(type=Optional[ParameterId])  # OH
+    heat_curve = attr.ib(type=Optional[ParameterId])  # HC
+    min_supply = attr.ib(type=Optional[ParameterId])  # MIS
+    max_supply = attr.ib(type=Optional[ParameterId])  # MAS
+    extra_heat_pump = attr.ib(type=Optional[ParameterId])  # EHP
 
 
 @attr.s
 class HotWaterSystem(object):
     name = attr.ib(type=str)
-    hot_water_charging = attr.ib(type=Optional[ParameterId])            # BT6
-    hot_water_top = attr.ib(type=Optional[ParameterId])                 # BT7
+    hot_water_charging = attr.ib(type=Optional[ParameterId])  # BT6
+    hot_water_top = attr.ib(type=Optional[ParameterId])  # BT7
     hot_water_comfort_mode = attr.ib(type=Optional[ParameterId])
-    hot_water_production = attr.ib(type=Optional[ParameterId])          # Active or not
+    hot_water_production = attr.ib(type=Optional[ParameterId])  # Active or not
     periodic_hot_water = attr.ib(type=Optional[ParameterId])
     stop_temperature_water_normal = attr.ib(type=Optional[ParameterId])
     start_temperature_water_normal = attr.ib(type=Optional[ParameterId])

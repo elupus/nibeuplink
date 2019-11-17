@@ -4,8 +4,8 @@ from typing import Iterable, Tuple, Any
 from typing_extensions import Deque
 from collections import deque
 
-def cyclic_tuple(data: Iterable[Tuple[Any, Any]],
-                 step: int):
+
+def cyclic_tuple(data: Iterable[Tuple[Any, Any]], step: int):
     """Chunked cyclic iterator over a data set.
 
     Data will be returned in chunks up to `step`
