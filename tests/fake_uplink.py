@@ -21,9 +21,9 @@ class JsonError(Exception):
 
 def oauth_error_response(func):
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    async def wrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            return await func(*args, **kwargs)
         except JsonError as e:
             data = {"error": e.error, "error_description": e.description}
             return web.json_response(data=data, status=e.status)
