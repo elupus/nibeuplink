@@ -53,8 +53,8 @@ class Uplink:
                 ),
             ]
         )
-        self.handler = None
-        self.server = None
+        self.runner = None
+        self.site = None
         self.base = None
         self.redirect = None
         self.systems = {}
@@ -75,17 +75,18 @@ class Uplink:
         port = unused_port()
         host = "127.0.0.1"
 
-        self.handler = self.app.make_handler()
-        self.server = await self.loop.create_server(self.handler, host, port)
+        self.runner = web.AppRunner(self.app)
+        await self.runner.setup()
+        self.site = web.TCPSite(self.runner, host, port)
+        await self.site.start()
         self.base = "http://{}:{}".format(host, port)
         self.redirect = "{}/redirect".format(self.base)
 
     async def stop(self):
         _LOGGER.info("Stopping fake uplink")
-        self.server.close()
-        await self.server.wait_closed()
+        await self.site.stop()
+        await self.runner.cleanup()
         await self.app.shutdown()
-        await self.handler.shutdown()
 
     @oauth_error_response
     async def on_oauth_token(self, request):
