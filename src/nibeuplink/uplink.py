@@ -7,9 +7,6 @@ import aiohttp
 from datetime import datetime, timedelta
 from typing import List, Optional, Any
 
-from urllib.parse import urlencode, urlsplit, parse_qs
-
-from .exceptions import UplinkResponseException, UplinkException
 from .utils import chunks, chunk_pop
 from .typing import (
     StatusItemIcon,
