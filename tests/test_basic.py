@@ -23,7 +23,6 @@ def fin_async(loop, coro):
     return fun
 
 
-@pytest.mark.asyncio
 @pytest.fixture
 async def default_uplink(loop, request):
     def access_write(data):
@@ -52,7 +51,6 @@ async def default_uplink(loop, request):
     return uplink, server
 
 
-@pytest.mark.asyncio
 @pytest.fixture
 async def uplink_with_data(loop, default_uplink):
 
@@ -103,12 +101,10 @@ async def uplink_with_data(loop, default_uplink):
     return default_uplink[0], default_uplink[1]
 
 
-@pytest.mark.asyncio
 async def test_status(default_uplink):
     assert not default_uplink[0].access_data
 
 
-@pytest.mark.asyncio
 async def test_get_authorize_url(default_uplink):
     from urllib.parse import urlsplit, parse_qs
 
@@ -121,7 +117,6 @@ async def test_get_authorize_url(default_uplink):
     assert q["scope"] == [" ".join(DEFAULT_SCOPE)]
 
 
-@pytest.mark.asyncio
 async def test_get_code_from_url(default_uplink):
     from urllib.parse import urlsplit, parse_qs
 
@@ -144,12 +139,10 @@ async def test_get_code_from_url(default_uplink):
         default_uplink[0].get_code_from_url(url)
 
 
-@pytest.mark.asyncio
 async def test_get_get_access_token(default_uplink):
     await default_uplink[0].get_access_token("code_sample")
 
 
-@pytest.mark.asyncio
 async def test_auth_flow(default_uplink):
     url = default_uplink[0].get_authorize_url()
     redirect = await default_uplink[0].session.post(url, allow_redirects=False)
@@ -157,7 +150,6 @@ async def test_auth_flow(default_uplink):
     assert redirect.headers["Location"].startswith(default_uplink[1].redirect)
 
 
-@pytest.mark.asyncio
 async def test_notifications(default_uplink):
     await default_uplink[0].get_access_token("goodcode")
 
@@ -227,7 +219,6 @@ async def test_notifications(default_uplink):
     assert notifications[0]["systemUnitId"] == 3
 
 
-@pytest.mark.asyncio
 async def test_token_refresh(uplink_with_data):
     uplink = uplink_with_data[0]
     server = uplink_with_data[1]
@@ -242,7 +233,6 @@ async def test_token_refresh(uplink_with_data):
     assert server.requests["on_oauth_token"] == on_oauth_token + 1
 
 
-@pytest.mark.asyncio
 async def test_get_parameter(uplink_with_data):
     uplink = uplink_with_data[0]
 
@@ -259,7 +249,6 @@ async def test_get_parameter(uplink_with_data):
     assert parameter["displayValue"] == "120 Units"
 
 
-@pytest.mark.asyncio
 async def test_put_parameter(uplink_with_data):
     uplink = uplink_with_data[0]
 
@@ -268,7 +257,6 @@ async def test_put_parameter(uplink_with_data):
     assert status == "DONE"
 
 
-@pytest.mark.asyncio
 async def test_parameters_unit(uplink_with_data):
     uplink = uplink_with_data[0]
 
@@ -279,7 +267,6 @@ async def test_parameters_unit(uplink_with_data):
     assert parameter["value"] == 100.0
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("count", [1, 15, 16])
 async def test_parameters(default_uplink, count):
     uplink = default_uplink[0]
@@ -321,7 +308,6 @@ async def test_parameters(default_uplink, count):
     assert server.requests["on_get_parameters"] == int((len(parameterids) + 14) / 15)
 
 
-@pytest.mark.asyncio
 async def test_throttle_initial():
     """No inital delay"""
     start = datetime.now()
@@ -331,7 +317,6 @@ async def test_throttle_initial():
     assert (datetime.now() - start) < timedelta(seconds=1)
 
 
-@pytest.mark.asyncio
 async def test_throttle_time_from_finish():
     """Time counted from end of with block (assumes no inital)"""
     start = datetime.now()

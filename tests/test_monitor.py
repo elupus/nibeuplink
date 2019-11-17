@@ -11,7 +11,6 @@ PARAMETERS = {
 
 
 @pytest.fixture
-@pytest.mark.asyncio
 async def uplink_mock(loop):
     uplink = asynctest.Mock(nibeuplink.Uplink("", "", ""))
 
@@ -22,7 +21,6 @@ async def uplink_mock(loop):
     return uplink
 
 
-@pytest.mark.asyncio
 async def test_monitor_1(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
@@ -35,7 +33,6 @@ async def test_monitor_1(uplink_mock):
     callback_a.assert_called_once_with(1, {"a": PARAMETERS["a"]})
 
 
-@pytest.mark.asyncio
 async def test_monitor_multiple_systems(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
@@ -52,7 +49,6 @@ async def test_monitor_multiple_systems(uplink_mock):
     callback.assert_any_call(2, {"b": PARAMETERS["b"]})
 
 
-@pytest.mark.asyncio
 async def test_monitor_removed_callback_one(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
@@ -78,7 +74,6 @@ async def test_monitor_removed_callback_one(uplink_mock):
     callback_b2.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_monitor_removed_callback_all(uplink_mock):
     monitor = nibeuplink.Monitor(uplink_mock)
 
