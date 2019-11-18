@@ -37,6 +37,7 @@ async def get_active_climate(
     async def check(key: str, value: ClimateSystem):
         if value.active_accessory is None:
             active[key] = value
+            return
 
         available = await uplink.get_parameter(system_id, value.active_accessory)
 
@@ -59,6 +60,7 @@ async def get_active_hotwater(
     async def check(key: str, value: HotWaterSystem):
         if value.hot_water_production is None:
             active[key] = value
+            return
 
         available = await uplink.get_parameter(system_id, value.hot_water_production)
 
@@ -81,6 +83,9 @@ async def get_active_ventilations(
     active = {}
 
     async def check(key: str, value: VentilationSystem):
+        if value.fan_speed is None:
+            return
+
         available = await uplink.get_parameter(system_id, value.fan_speed)
 
         _LOGGER.debug("Ventilation %s:%s fan_speed: %s", system_id, key, available)
