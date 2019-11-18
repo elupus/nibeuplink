@@ -6,7 +6,6 @@ from urllib.parse import urldefrag, parse_qs
 
 import nibeuplink
 import argparse
-import cattr
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,11 +13,6 @@ _LOGGER = logging.getLogger(__name__)
 def pair(arg):
     data = arg.split("=")
     return (data[0], data[1])
-
-
-def thermostat(arg):
-    data = json.loads(arg)
-    return cattr.structure(data, nibeuplink.SetThermostatModel)
 
 
 parser = argparse.ArgumentParser(description="Read data from nibe uplink.")
@@ -42,7 +36,7 @@ parser.add_argument("--verbose", action="store_true")
 parser.add_argument("--smarthome_mode", action="store_true")
 parser.add_argument("--put_smarthome_mode", type=str)
 parser.add_argument("--smarthome_thermostats", action="store_true")
-parser.add_argument("--post_smarthome_thermostats", type=thermostat)
+parser.add_argument("--post_smarthome_thermostats", type=dict)
 
 args = parser.parse_args()
 

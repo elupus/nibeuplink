@@ -1,6 +1,5 @@
 """Handler for uplink."""
 import attr
-import cattr
 import logging
 import asyncio
 import aiohttp
@@ -11,8 +10,6 @@ from .utils import chunks, chunk_pop
 from .typing import (
     StatusItemIcon,
     ParameterId,
-)
-from .types import (
     Thermostat,
     SetThermostatModel,
 )
@@ -280,7 +277,7 @@ class Uplink:
         async with self.lock, self.throttle:
             data = await self.get(f"systems/{system_id}/smarthome/thermostats")
         _LOGGER.debug("Get smarthome thermostats %s", data)
-        return cattr.structure(data, List[Thermostat])
+        return data
 
     async def post_smarthome_thermostats(
         self, system_id: int, thermostat: SetThermostatModel
@@ -290,9 +287,8 @@ class Uplink:
             "Content-Type": "application/json;charset=UTF-8",
         }
 
-        data = attr.asdict(thermostat)
-        _LOGGER.debug("Post smarthome thermostat %s -> %s", thermostat, data)
+        _LOGGER.debug("Post smarthome thermostat: %s", thermostat)
         async with self.lock, self.throttle:
             await self.post(
-                f"{system_id}/smarthome/thermostats", json=data, headers=headers,
+                f"systems/{system_id}/smarthome/thermostats", json=thermostat, headers=headers,
             )

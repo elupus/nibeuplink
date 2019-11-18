@@ -12,14 +12,11 @@ from .const import (
     PARAM_VENTILATION_SYSTEMS,
     SMARTHOME_MODES,
 )
-from .typing import StatusItemIcon
+from .typing import StatusItemIcon, SetThermostatModel, Thermostat, SmartHomeSystem
 from .types import (
-    Thermostat,
-    SetThermostatModel,
     VentilationSystem,
     ClimateSystem,
     HotWaterSystem,
-    SmartHomeSystem,
 )
 
 from .monitor import Monitor

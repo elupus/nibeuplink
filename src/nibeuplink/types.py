@@ -26,30 +26,6 @@ class ParameterExtended(Parameter):
 
 
 @attr.s
-class SmartHomeSystem(object):
-    name = attr.ib(type=str)
-
-
-@attr.s
-class Thermostat(object):
-    smartHomeSystem = attr.ib(type=SmartHomeSystem)
-    name = attr.ib(type=str)
-    climateSystems = attr.ib(default=None, type=Optional[List[int]])
-    currentTemperature = attr.ib(default=None, type=Optional[str])
-    targetTemperature = attr.ib(default=None, type=Optional[str])
-
-
-@attr.s
-class SetThermostatModel(object):
-    externalId = attr.ib(type=int)
-    name = attr.ib(type=str)
-    actualTemp = attr.ib(default=None, type=Optional[int])  # Multiplied by 10
-    targetTemp = attr.ib(default=None, type=Optional[int])  # Multiplied by 10
-    valvePosition = attr.ib(default=None, type=Optional[int])
-    climateSystems = attr.ib(default=None, type=Optional[List[int]])
-
-
-@attr.s
 class ClimateSystem(object):
     name = attr.ib(type=str)
     return_temp = attr.ib(type=Optional[ParameterId])  # BT3
