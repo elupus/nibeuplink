@@ -9,7 +9,10 @@ ParameterId = Identifier
 Parameter = Dict[str, Any]
 StatusItemIcon = Dict[str, Any]
 ParameterSet = Dict[ParameterId, Parameter]
-SmartHomeSystem = str
+
+
+class SmartHomeSystem(TypedDict):
+    name: str
 
 
 class Thermostat(TypedDict):
