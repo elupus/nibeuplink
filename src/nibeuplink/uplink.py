@@ -204,7 +204,7 @@ class Uplink:
         async with self.lock, self.throttle:
             data = await self.get(
                 f"systems/{system_id}/serviceinfo/categories",
-                {"parameters": str(parameters), "systemUnitId": unit_id},
+                params={"parameters": str(parameters), "systemUnitId": unit_id},
             )
         for category in data:
             if category["parameters"]:
