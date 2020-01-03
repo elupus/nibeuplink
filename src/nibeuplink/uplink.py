@@ -268,7 +268,7 @@ class Uplink:
 
         data = {"mode": mode}
         async with self.lock, self.throttle:
-            data = await self.session.put(
+            data = await self.put(
                 f"systems/{system_id}/smarthome/mode", json=data, headers=headers,
             )
         _LOGGER.debug("Set smarthome mode %s -> %s", mode, data)
