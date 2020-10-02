@@ -32,7 +32,8 @@ setup(
             'pytest-aiohttp',
             'pytest-cov<2.6',
             'coveralls',
-            'asynctest'
+            'asynctest',
+            "aioresponses",
         ]
     },
     entry_points = {
