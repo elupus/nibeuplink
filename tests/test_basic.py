@@ -38,6 +38,7 @@ async def default_session(loop, request, server):
         scope=DEFAULT_SCOPE,
         base=server.base,
     )
+    await session.open()
     yield session
     await session.close()
 
