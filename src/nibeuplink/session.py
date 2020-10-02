@@ -51,16 +51,12 @@ class UplinkSession:
     ):
         self.redirect_uri = redirect_uri
         self.client_id = client_id
+        self.client_secret = client_secret
         self.access_data_write = access_data_write
         self.access_data = None
         self.session = None
         self.scope = scope
         self.base = base
-
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-        }
 
         # check that the access scope is enough, otherwise ignore
         if access_data:
@@ -71,15 +67,26 @@ class UplinkSession:
                     "Ignoring access data due to changed scope {}".format(scope)
                 )
 
-        self.session = aiohttp.ClientSession(
-            headers=headers, auth=aiohttp.BasicAuth(client_id, client_secret)
-        )
-
     async def __aenter__(self):
+        await self.open()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
+
+    async def open(self):
+
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        }
+
+        self.session = aiohttp.ClientSession(
+            headers=headers, auth=aiohttp.BasicAuth(self.client_id, self.client_secret)
+        )
+
+        if self.access_data:
+            await self.refresh_access_token()
 
     async def close(self):
         if self.session:
