@@ -12,7 +12,7 @@ PARAMETERS = {
 
 @pytest.fixture
 async def uplink_mock(loop):
-    uplink = asynctest.Mock(nibeuplink.Uplink("", "", ""))
+    uplink = asynctest.Mock(nibeuplink.Uplink)
 
     def get_parameter(system_id, parameter_id):
         return PARAMETERS[parameter_id]

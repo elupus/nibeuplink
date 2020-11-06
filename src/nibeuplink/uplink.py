@@ -4,7 +4,7 @@ import logging
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta
-from typing import List, Optional, Any, cast
+from typing import Dict, List, Optional, Any, cast
 
 from .utils import chunks, chunk_pop
 from .typing import (
@@ -63,13 +63,20 @@ class Uplink:
         self.session = session
         self.loop = loop
         self.base = base
-        self.requests = {}
+        self.requests: Dict[int, List[ParameterRequest]] = {}
 
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        pass
+        await self.close()
+
+    async def close(self):
+        """Close uplink and clear any outstanding requests"""
+        async with self.lock:
+            for requests in self.requests.values():
+                while requests:
+                    requests.pop().done = True
 
     async def get(self, url, *args, **kwargs):
         return await self.session.request(
