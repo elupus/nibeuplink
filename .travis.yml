@@ -3,6 +3,7 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
 
 cache: pip
 install: pip install -e .[tests]
@@ -12,4 +13,5 @@ after_success:
 
 matrix:
   allow_failures:
-    - python: "3.8"
+    - python: "3.6"
+    - python: "3.9"
