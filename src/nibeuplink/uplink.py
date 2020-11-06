@@ -13,6 +13,7 @@ from .typing import (
     Thermostat,
     SetThermostatModel,
     System,
+    SystemUnit,
 )
 from .const import MAX_REQUEST_PARAMETERS
 
@@ -226,7 +227,7 @@ class Uplink:
                     self.add_parameter_extensions(param)
         return data
 
-    async def get_units(self, system_id: int):
+    async def get_units(self, system_id: int) -> List[SystemUnit]:
         _LOGGER.debug("Requesting units on system {}".format(system_id))
         async with self.lock, self.throttle:
             return await self.get(f"systems/{system_id}/units")

@@ -26,6 +26,13 @@ class System(TypedDict):
     address: Optional[Address]
     hasAlarmed: bool
 
+class SystemUnit(TypedDict):
+    systemUnitId: int
+    name: str
+    shortName: str
+    product: str
+    softwareVersion: str
+
 class SmartHomeSystem(TypedDict):
     name: str
 
