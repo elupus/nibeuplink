@@ -4,7 +4,7 @@ import logging
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta
-from typing import List, Optional, Any
+from typing import List, Optional, Any, cast
 
 from .utils import chunks, chunk_pop
 from .typing import (
@@ -12,6 +12,7 @@ from .typing import (
     ParameterId,
     Thermostat,
     SetThermostatModel,
+    System,
 )
 from .const import MAX_REQUEST_PARAMETERS
 
@@ -169,16 +170,16 @@ class Uplink:
             )
         return result[0]["status"]
 
-    async def get_system(self, system_id: int):
+    async def get_system(self, system_id: int) -> System:
         _LOGGER.debug("Requesting system {}".format(system_id))
         async with self.lock, self.throttle:
-            return await self.get(f"systems/{system_id}")
+            return cast(System, await self.get(f"systems/{system_id}"))
 
-    async def get_systems(self):
+    async def get_systems(self) -> List[System]:
         _LOGGER.debug("Requesting systems")
         async with self.lock, self.throttle:
             data = await self.get("systems")
-            return data["objects"]
+            return cast(List[System], data["objects"])
 
     async def get_category_raw(
         self, system_id: int, category_id: str, unit_id: int = 0

@@ -10,6 +10,21 @@ Parameter = Dict[str, Any]
 StatusItemIcon = Dict[str, Any]
 ParameterSet = Dict[ParameterId, Parameter]
 
+SecurityLevel = Dict[str, Any]
+ConnectionStatus = Dict[str, Any]
+Address = Dict[str, Any]
+
+class System(TypedDict):
+    systemId: int
+    name: str
+    productName: str
+    productImage: str
+    securityLevel: SecurityLevel
+    serialNumber: str
+    lastActivityDate: str
+    connectionStatus: ConnectionStatus
+    address: Optional[Address]
+    hasAlarmed: bool
 
 class SmartHomeSystem(TypedDict):
     name: str
