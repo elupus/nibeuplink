@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='nibeuplink',
-    version='1.1.1',
+    version='1.2.0',
     description='A python wrapper around Nibe Uplink REST API',
     long_description=long_description,
     long_description_content_type='text/x-rst',
