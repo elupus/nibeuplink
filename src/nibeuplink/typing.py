@@ -52,3 +52,20 @@ class SetThermostatModel(TypedDict):
     targetTemp: Optional[int] # Multiplied by 10
     valvePosition: Optional[int]
     climateSystems: Optional[List[int]]
+
+class ParameterType(TypedDict, total=False):
+    parameterId: int
+    Name: str
+    title: str
+    designation: str
+    unit: str
+    displayValue: str
+    rawValue: int
+
+    ## Extension by library
+    value: Union[str, float, None]
+
+class CategoryType(TypedDict, total=False):
+    categoryId: int
+    name: str
+    parameters: List[ParameterType]

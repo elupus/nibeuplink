@@ -4,11 +4,11 @@ import logging
 import asyncio
 import aiohttp
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, cast
+from typing import Dict, List, Optional, Any, Union, cast
 
 from .utils import chunks, chunk_pop
 from .typing import (
-    StatusItemIcon,
+    CategoryType, ParameterType, StatusItemIcon,
     ParameterId,
     Thermostat,
     SetThermostatModel,
@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 class ParameterRequest:
     def __init__(self, parameter_id: str):
         self.parameter_id = parameter_id
-        self.data = None
+        self.data: Optional[ParameterType] = None
         self.done = False
 
 
@@ -93,7 +93,7 @@ class Uplink:
             "POST", f"{self.base}/api/v1/{url}", *args, **kwargs
         )
 
-    async def get_parameter_raw(self, system_id: int, parameter_id: ParameterId):
+    async def get_parameter_raw(self, system_id: int, parameter_id: ParameterId) -> Optional[ParameterType]:
 
         request = ParameterRequest(str(parameter_id))
         if system_id not in self.requests:
@@ -142,10 +142,10 @@ class Uplink:
 
         return request.data
 
-    def add_parameter_extensions(self, data):
+    def add_parameter_extensions(self, data: Optional[ParameterType]):
         if data:
             if data["displayValue"].endswith(data["unit"]) and len(data["unit"]):
-                value = data["displayValue"][: -len(data["unit"])]
+                value: Union[str, float] = data["displayValue"][: -len(data["unit"])]
 
                 try:
                     value = float(value)
@@ -191,7 +191,7 @@ class Uplink:
 
     async def get_category_raw(
         self, system_id: int, category_id: str, unit_id: int = 0
-    ):
+    ) -> List[ParameterType]:
         _LOGGER.debug(
             "Requesting category {} on system {}".format(category_id, system_id)
         )
@@ -201,17 +201,17 @@ class Uplink:
                 {"systemUnitId": unit_id},
             )
 
-    async def get_category(self, system_id: int, category_id: str, unit_id: int = 0):
+    async def get_category(self, system_id: int, category_id: str, unit_id: int = 0) -> List[ParameterType]:
         data = await self.get_category_raw(system_id, category_id, unit_id)
         for param in data:
             self.add_parameter_extensions(param)
         return data
 
-    async def get_categories(self, system_id: int, parameters: bool, unit_id: int = 0):
+    async def get_categories(self, system_id: int, parameters: bool, unit_id: int = 0) -> List[CategoryType]:
         _LOGGER.debug("Requesting categories on system {}".format(system_id))
 
         async with self.lock, self.throttle:
-            data = await self.get(
+            data: List[CategoryType] = await self.get(
                 f"systems/{system_id}/serviceinfo/categories",
                 params={"parameters": str(parameters), "systemUnitId": unit_id},
             )
