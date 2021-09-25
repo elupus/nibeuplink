@@ -12,12 +12,12 @@ try to make the most of your requests by batching requests.
 
 Status
 ______
-.. image:: https://travis-ci.org/elupus/nibeuplink.svg?branch=master
-    :target: https://travis-ci.org/elupus/nibeuplink
+.. image:: https://github.com/elupus/nibeuplink/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/elupus/nibeuplink/actions/workflows/python-package.yml
 
-.. image:: https://coveralls.io/repos/github/elupus/nibeuplink/badge.svg?branch=master
-    :target: https://coveralls.io/github/elupus/nibeuplink?branch=master
-
+.. image:: https://codecov.io/gh/elupus/nibeuplink/branch/master/graph/badge.svg?token=WZy5CcdYom
+    :target: https://codecov.io/gh/elupus/nibeuplink
+    
 
 Example
 _______
