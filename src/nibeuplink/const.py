@@ -17,7 +17,7 @@ PARAM_HOTWATER_SYSTEMS = {
         47049,
         47045,
         43424,
-        "hot_water_boost",
+        48132,
     ),
     "DEW": HotWaterSystem(
         "Hot Water (DEW)",
@@ -33,7 +33,7 @@ PARAM_HOTWATER_SYSTEMS = {
         47049,
         47045,
         43424,
-        "hot_water_boost",
+        48132,
     ),
     "SCA": HotWaterSystem(
         "Hot Water (SCA)",
@@ -49,7 +49,7 @@ PARAM_HOTWATER_SYSTEMS = {
         47049,
         47045,
         43424,
-        "hot_water_boost",
+        48132,
     ),
     "AHPS": HotWaterSystem(
         "Hot Water (AHPS)",
@@ -65,7 +65,7 @@ PARAM_HOTWATER_SYSTEMS = {
         47049,
         47045,
         43424,
-        "hot_water_boost",
+        48132,
     ),
 }
 
@@ -160,7 +160,7 @@ PARAM_VENTILATION_SYSTEMS = {
         47263,
         47262,
         47261,
-        "ventilation_boost",
+        47260,
     )
 }
 
