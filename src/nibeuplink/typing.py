@@ -85,4 +85,4 @@ class SoftwareInfo(TypedDict):
 
 class SystemSoftwareInfo(TypedDict):
     current: SoftwareVersion
-    upgrade: SoftwareInfo
+    upgrade: Optional[SoftwareInfo]
