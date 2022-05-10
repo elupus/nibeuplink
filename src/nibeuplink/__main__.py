@@ -21,6 +21,7 @@ parser.add_argument("--client_secret", required=True)
 parser.add_argument("--redirect_uri", required=True)
 
 parser.add_argument("--system", type=int)
+parser.add_argument("--software", action="store_true")
 parser.add_argument("--categories", action="store_true")
 parser.add_argument("--category", nargs="+")
 parser.add_argument("--status", action="store_true")
@@ -112,6 +113,9 @@ async def run():
                         for p in args.category
                     ]
                 )
+
+            if args.software:
+                todo.extend([uplink.get_system_software(args.system)])
 
             if args.status:
                 todo.extend([uplink.get_status(args.system)])

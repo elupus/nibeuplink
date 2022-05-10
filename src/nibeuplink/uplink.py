@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Any, Union, cast
 from .utils import chunks, chunk_pop
 from .typing import (
     CategoryType, ParameterType, StatusItemIcon,
-    ParameterId,
+    ParameterId, SystemSoftwareInfo,
     Thermostat,
     SetThermostatModel,
     System,
@@ -182,6 +182,11 @@ class Uplink:
         _LOGGER.debug("Requesting system {}".format(system_id))
         async with self.lock, self.throttle:
             return cast(System, await self.get(f"systems/{system_id}"))
+
+    async def get_system_software(self, system_id: int) -> SystemSoftwareInfo:
+        _LOGGER.debug("Requesting system software {}".format(system_id))
+        async with self.lock, self.throttle:
+            return cast(SystemSoftwareInfo, await self.get(f"systems/{system_id}/software"))
 
     async def get_systems(self) -> List[System]:
         _LOGGER.debug("Requesting systems")

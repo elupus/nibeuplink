@@ -1,3 +1,4 @@
+from functools import total_ordering
 from typing import Dict, NewType, Any, Union, Optional, List
 from typing_extensions import (
     TypedDict
@@ -69,3 +70,19 @@ class CategoryType(TypedDict, total=False):
     categoryId: int
     name: str
     parameters: List[ParameterType]
+
+
+class SoftwareVersion(TypedDict):
+    name: str
+    version: int
+    release: int
+
+class SoftwareInfo(TypedDict):
+    releaseDate: str
+    name: str	
+    version: int
+    release: int
+
+class SystemSoftwareInfo(TypedDict):
+    current: SoftwareVersion
+    upgrade: SoftwareInfo
