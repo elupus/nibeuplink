@@ -2,10 +2,16 @@
 Nibe Uplink Communciation Module
 ********************************
 
+Deprecation
+===========
+
+.. warning::
+
+    Nibe is shutting down nibeuplink.com which this integration is dependent upon. This project is therefor deprecated. Upgrade your heatpump and swith to myuplink solution, use built in modbus server on S-series pumps or add a nibegw device like https://github.com/elupus/esphome-nibe to use the native support inside home assistant instead.
+
 
 Module
 ======
-
 
 The module is an asyncio driven interface to nibe uplink public API. It is throttled to one http request every 4 seconds so
 try to make the most of your requests by batching requests.
